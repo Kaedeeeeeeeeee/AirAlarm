@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 enum AppState {
     case idle
@@ -10,6 +11,8 @@ enum AppState {
 struct ContentView: View {
     @State private var audioManager = AudioManager()
     var alarmManager: AlarmManager
+    @Environment(LocalizationManager.self) private var loc
+    @Environment(\.modelContext) private var modelContext
 
     @State private var selectedNoise: WhiteNoiseType = .rain
     @State private var wakeWindowStart = Calendar.current.date(
@@ -18,81 +21,105 @@ struct ContentView: View {
 
     @State private var appState: AppState = .idle
     @State private var hasNotificationPermission = false
+    @State private var showSettings = false
 
     @AppStorage("lastNoiseType") private var lastNoiseRawValue: String = WhiteNoiseType.rain.rawValue
     @AppStorage("wakeWindowStartHour") private var storedHour: Int = 6
     @AppStorage("wakeWindowStartMinute") private var storedMinute: Int = 30
+    @AppStorage("noiseVolume") private var storedVolume: Double = 0.7
 
-    // Fixed 90-minute window
     private var wakeWindowEnd: Date {
         wakeWindowStart.addingTimeInterval(90 * 60)
     }
 
     var body: some View {
         ZStack {
-            // Noise-type tinted overlay
             noiseTintOverlay
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.5), value: selectedNoise)
 
             VStack(spacing: 0) {
+                // Top bar: settings + debug
+                HStack {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .padding(10)
+                    }
+                    .glassEffect(.clear, in: .circle)
+
+                    Spacer()
+
                     #if DEBUG
-                    HStack {
-                        Spacer()
-                        Button {
-                            alarmManager.scheduleAlarm(at: Date().addingTimeInterval(2), cycles: 4)
-                            withAnimation(.spring(duration: 0.4)) { appState = .alarmSet }
-                        } label: {
-                            Image(systemName: "bell.badge")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.4))
-                                .padding(10)
-                        }
-                        .glassEffect(.clear, in: .circle)
+                    Button {
+                        alarmManager.scheduleAlarm(at: Date().addingTimeInterval(2), cycles: 4)
+                        withAnimation(.spring(duration: 0.4)) { appState = .alarmSet }
+                    } label: {
+                        Image(systemName: "bell.badge")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .padding(10)
                     }
-                    .padding(.trailing, 8)
-                    .padding(.top, 4)
+                    .glassEffect(.clear, in: .circle)
                     #endif
-
-                    Spacer()
-
-                    // Wake window info
-                    wakeWindowHeader
-                        .padding(.bottom, 16)
-
-                    // Clock dial
-                    ClockDialView(
-                        wakeWindowStart: $wakeWindowStart,
-                        appState: appState,
-                        sleepTime: audioManager.sleepTime,
-                        wakeTime: alarmManager.scheduledWakeTime,
-                        scheduledCycles: alarmManager.scheduledCycles,
-                        onTapCenter: { handleAction() }
-                    )
-                    .frame(width: 350, height: 350)
-
-                    // Alarm info (when alarm set)
-                    if appState == .alarmSet {
-                        alarmInfoPill
-                            .transition(.scale.combined(with: .opacity))
-                            .padding(.top, 16)
-                    }
-
-                    // Playing status
-                    if appState == .playingNoise {
-                        playingStatus
-                            .transition(.scale.combined(with: .opacity))
-                            .padding(.top, 16)
-                    }
-
-                    Spacer()
-
-                    // Noise picker
-                    noisePickerView
-                        .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 8)
+                .padding(.top, 4)
+
+                Spacer()
+
+                wakeWindowHeader
+                    .padding(.bottom, 16)
+
+                ClockDialView(
+                    wakeWindowStart: $wakeWindowStart,
+                    appState: appState,
+                    sleepTime: audioManager.sleepTime,
+                    wakeTime: alarmManager.scheduledWakeTime,
+                    scheduledCycles: alarmManager.scheduledCycles,
+                    onTapCenter: { handleAction() }
+                )
+                .frame(width: 350, height: 350)
+
+                if appState == .alarmSet {
+                    alarmInfoPill
+                        .transition(.scale.combined(with: .opacity))
+                        .padding(.top, 16)
+                }
+
+                if appState == .playingNoise {
+                    playingStatus
+                        .transition(.scale.combined(with: .opacity))
+                        .padding(.top, 16)
+                }
+
+                // Confirming sleep indicator
+                if audioManager.isConfirmingSleep {
+                    HStack(spacing: 8) {
+                        ProgressView().tint(.white)
+                        Text(loc.t("detecting_sleep"))
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .transition(.scale.combined(with: .opacity))
+                    .padding(.top, 16)
+                }
+
+                Spacer()
+
+                // Volume slider
+                volumeSlider
+                    .padding(.bottom, 12)
+
+                noisePickerView
+                    .padding(.bottom, 16)
             }
+            .padding(.horizontal, 20)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
         .task {
             hasNotificationPermission = await alarmManager.requestPermission()
             restoreSettings()
@@ -114,7 +141,7 @@ struct ContentView: View {
 
     private var wakeWindowHeader: some View {
         VStack(spacing: 6) {
-            Text("Wake Window")
+            Text(loc.t("wake_window"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white.opacity(0.4))
 
@@ -122,29 +149,48 @@ struct ContentView: View {
                 Text(formatTime(wakeWindowStart))
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-
                 Text("—")
                     .font(.system(size: 24, weight: .light))
                     .foregroundStyle(.white.opacity(0.3))
-
                 Text(formatTime(wakeWindowEnd))
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
 
-            Text("Drag the arc to adjust · 90 min cycle")
+            Text(loc.t("drag_hint"))
                 .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.25))
         }
+    }
+
+    // MARK: - Volume Slider
+
+    private var volumeSlider: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "speaker.fill")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.35))
+            Slider(value: Binding(
+                get: { storedVolume },
+                set: {
+                    storedVolume = $0
+                    audioManager.setVolume(Float($0))
+                }
+            ), in: 0...1)
+            .tint(.white.opacity(0.5))
+            Image(systemName: "speaker.wave.3.fill")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.35))
+        }
+        .padding(.horizontal, 24)
     }
 
     // MARK: - Playing Status
 
     private var playingStatus: some View {
         HStack(spacing: 8) {
-            Image(systemName: "waveform")
-                .symbolEffect(.pulse)
-            Text("Playing \(selectedNoise.rawValue)...")
+            Image(systemName: "waveform").symbolEffect(.pulse)
+            Text("\(loc.t("playing")) \(selectedNoise.rawValue)...")
         }
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.white.opacity(0.6))
@@ -158,7 +204,7 @@ struct ContentView: View {
                 Text(wakeTime, style: .time)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("\(alarmManager.scheduledCycles) cycles — \(SleepCycleCalculator.formatDuration(cycles: alarmManager.scheduledCycles))")
+                Text("\(alarmManager.scheduledCycles) \(loc.t("cycles")) — \(SleepCycleCalculator.formatDuration(cycles: alarmManager.scheduledCycles))")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.6))
             }
@@ -167,7 +213,6 @@ struct ContentView: View {
         .padding(.vertical, 16)
         .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
-
 
     // MARK: - Noise Picker
 
@@ -224,13 +269,12 @@ struct ContentView: View {
         return f.string(from: date)
     }
 
-    // MARK: - Settings
-
     private func restoreSettings() {
         if let noise = WhiteNoiseType(rawValue: lastNoiseRawValue) { selectedNoise = noise }
         if let d = Calendar.current.date(bySettingHour: storedHour, minute: storedMinute, second: 0, of: Date()) {
             wakeWindowStart = d
         }
+        audioManager.setVolume(Float(storedVolume))
     }
 
     // MARK: - Business Logic
@@ -278,6 +322,18 @@ struct ContentView: View {
         }
     }
 
+    func saveSleepRecord() {
+        guard let sleepTime = audioManager.sleepTime,
+              let wakeTime = alarmManager.scheduledWakeTime else { return }
+        let record = SleepRecord(
+            sleepTime: sleepTime,
+            wakeTime: wakeTime,
+            cycles: alarmManager.scheduledCycles,
+            noiseType: selectedNoise.rawValue
+        )
+        modelContext.insert(record)
+    }
+
     private func normalizedWakeTime(_ time: Date, after sleepTime: Date) -> Date {
         let cal = Calendar.current
         let comps = cal.dateComponents([.hour, .minute], from: time)
@@ -291,4 +347,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView(alarmManager: AlarmManager())
+        .environment(LocalizationManager())
+        .modelContainer(for: SleepRecord.self)
 }

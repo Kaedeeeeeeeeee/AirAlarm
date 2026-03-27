@@ -7,6 +7,7 @@ class AlarmManager {
     var scheduledWakeTime: Date?
     var scheduledCycles: Int = 0
     var isRinging = false
+    var snoozeCount: Int = 0
 
     private var alarmPlayer: AVAudioPlayer?
     private var alarmTimer: Timer?
@@ -26,7 +27,6 @@ class AlarmManager {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
-        // 1. Schedule backup notification (in case app is killed)
         let content = UNMutableNotificationContent()
         content.title = "Time to Wake Up"
         content.body = "You've completed \(cycles) sleep cycles (\(SleepCycleCalculator.formatDuration(cycles: cycles))). This is your optimal wake time!"
@@ -37,17 +37,16 @@ class AlarmManager {
         guard interval > 0 else { return }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: "air-alarm-wake",
-            content: content,
-            trigger: trigger
-        )
+        let request = UNNotificationRequest(identifier: "air-alarm-wake", content: content, trigger: trigger)
         center.add(request)
 
-        // 2. Schedule in-app audio alarm (primary method)
+        alarmTimer?.invalidate()
         alarmTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
             self?.startRinging()
         }
+
+        // Schedule background task as backup
+        BackgroundTaskManager.scheduleAlarmCheck(at: wakeTime)
 
         isAlarmScheduled = true
         scheduledWakeTime = wakeTime
@@ -62,12 +61,21 @@ class AlarmManager {
         isAlarmScheduled = false
         scheduledWakeTime = nil
         scheduledCycles = 0
+        snoozeCount = 0
+    }
+
+    // MARK: - Snooze
+
+    func snooze(minutes: Int = 5) {
+        stopRinging()
+        snoozeCount += 1
+        let snoozeTime = Date().addingTimeInterval(Double(minutes * 60))
+        scheduleAlarm(at: snoozeTime, cycles: scheduledCycles)
     }
 
     // MARK: - Ringing
 
-    private func startRinging() {
-        // Configure audio session for speaker output (works even if AirPods fell off)
+    func startRinging() {
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
@@ -76,22 +84,16 @@ class AlarmManager {
             print("Failed to configure alarm audio session: \(error)")
         }
 
-        // Load alarm sound
-        guard let url = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else {
-            print("alarm.mp3 not found in bundle")
-            return
-        }
+        guard let url = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else { return }
 
         do {
             let player = try AVAudioPlayer(contentsOf: url)
-            player.numberOfLoops = -1 // Loop until dismissed
-            player.volume = 0.0 // Start silent
+            player.numberOfLoops = -1
+            player.volume = 0.0
             player.prepareToPlay()
             player.play()
             self.alarmPlayer = player
             self.isRinging = true
-
-            // Gradually increase volume over 15 seconds
             startVolumeRamp()
         } catch {
             print("Failed to play alarm: \(error)")
@@ -107,7 +109,6 @@ class AlarmManager {
     }
 
     private func startVolumeRamp() {
-        // Ramp from 0 to 1 over 15 seconds (update every 0.2s)
         let rampDuration: Float = 15.0
         let stepInterval: TimeInterval = 0.2
         let steps = Int(rampDuration / Float(stepInterval))
@@ -118,12 +119,9 @@ class AlarmManager {
                 timer.invalidate()
                 return
             }
-
             currentStep += 1
             let progress = Float(currentStep) / Float(steps)
-            // Ease-in curve for natural volume ramp
             player.volume = progress * progress
-
             if currentStep >= steps {
                 player.volume = 1.0
                 timer.invalidate()

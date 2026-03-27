@@ -19,16 +19,6 @@ enum WhiteNoiseType: String, CaseIterable, Identifiable {
         case .pureTone: return "whitenoise"
         }
     }
-
-    var systemSoundDescription: String {
-        switch self {
-        case .rain: return "Rain sounds"
-        case .ocean: return "Ocean waves"
-        case .forest: return "Forest ambience"
-        case .fan: return "Fan noise"
-        case .pureTone: return "Pure white noise"
-        }
-    }
 }
 
 @Observable
@@ -36,20 +26,25 @@ class AudioManager {
     var isPlaying = false
     var sleepDetected = false
     var sleepTime: Date?
+    var volume: Float = 0.7
+    var isConfirmingSleep = false
 
     private var audioPlayer: AVAudioPlayer?
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
     private var onSleepDetected: (() -> Void)?
+    private var confirmationTimer: Timer?
+    private var interruptionStartTime: Date?
 
     func startWhiteNoise(type: WhiteNoiseType, onSleep: @escaping () -> Void) {
         onSleepDetected = onSleep
         sleepDetected = false
         sleepTime = nil
+        isConfirmingSleep = false
+        confirmationTimer?.invalidate()
 
         configureAudioSession()
 
-        // Try file-based playback first, fall back to procedural generation
         if let url = Bundle.main.url(forResource: type.fileName, withExtension: "mp3") {
             playAudioFile(url: url)
         } else {
@@ -60,6 +55,9 @@ class AudioManager {
     }
 
     func stop() {
+        confirmationTimer?.invalidate()
+        confirmationTimer = nil
+        isConfirmingSleep = false
         audioEngine?.stop()
         playerNode?.stop()
         audioEngine = nil
@@ -69,12 +67,15 @@ class AudioManager {
         isPlaying = false
 
         try? AVAudioSession.sharedInstance().setActive(false)
+        NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
+    }
 
-        NotificationCenter.default.removeObserver(
-            self,
-            name: AVAudioSession.interruptionNotification,
-            object: nil
-        )
+    func setVolume(_ value: Float) {
+        volume = value
+        audioPlayer?.volume = value
+        if let node = playerNode {
+            node.volume = value
+        }
     }
 
     // MARK: - File-Based Playback
@@ -82,7 +83,8 @@ class AudioManager {
     private func playAudioFile(url: URL) {
         do {
             let player = try AVAudioPlayer(contentsOf: url)
-            player.numberOfLoops = -1 // Loop indefinitely
+            player.numberOfLoops = -1
+            player.volume = volume
             player.prepareToPlay()
             player.play()
             self.audioPlayer = player
@@ -113,15 +115,39 @@ class AudioManager {
     @objc private func handleInterruption(notification: Notification) {
         guard let userInfo = notification.userInfo,
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
-            return
-        }
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
 
         if type == .began && isPlaying {
-            isPlaying = false
-            sleepDetected = true
-            sleepTime = Date()
-            onSleepDetected?()
+            // Start 30-second confirmation window
+            interruptionStartTime = Date()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.isConfirmingSleep = true
+                self.confirmationTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
+                    guard let self else { return }
+                    // 30s passed without resume → confirmed sleep
+                    self.isPlaying = false
+                    self.sleepDetected = true
+                    self.sleepTime = self.interruptionStartTime
+                    self.isConfirmingSleep = false
+                    self.onSleepDetected?()
+                }
+            }
+        } else if type == .ended {
+            // Audio resumed — false trigger
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isConfirmingSleep else { return }
+                self.confirmationTimer?.invalidate()
+                self.confirmationTimer = nil
+                self.isConfirmingSleep = false
+                self.interruptionStartTime = nil
+
+                let options = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+                if AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume) {
+                    self.audioPlayer?.play()
+                    self.playerNode?.play()
+                }
+            }
         }
     }
 
@@ -140,8 +166,8 @@ class AudioManager {
         do {
             try engine.start()
             player.scheduleBuffer(buffer, at: nil, options: .loops)
+            player.volume = volume
             player.play()
-
             self.audioEngine = engine
             self.playerNode = player
         } catch {
@@ -154,14 +180,11 @@ class AudioManager {
         let frameCount = AVAudioFrameCount(sampleRate * 2)
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
-
         let data = buffer.floatChannelData![0]
 
         switch type {
         case .pureTone:
-            for i in 0..<Int(frameCount) {
-                data[i] = Float.random(in: -0.3...0.3)
-            }
+            for i in 0..<Int(frameCount) { data[i] = Float.random(in: -0.3...0.3) }
         case .rain:
             var prev: Float = 0
             for i in 0..<Int(frameCount) {
@@ -174,17 +197,14 @@ class AudioManager {
             for i in 0..<Int(frameCount) {
                 let noise = Float.random(in: -0.3...0.3)
                 let wave = sin(Float(i) / Float(sampleRate) * 0.3 * .pi)
-                let envelope = 0.15 + 0.15 * wave
-                data[i] = noise * envelope
+                data[i] = noise * (0.15 + 0.15 * wave)
             }
         case .forest:
             var prev: Float = 0
             for i in 0..<Int(frameCount) {
                 let noise = Float.random(in: -0.2...0.2)
                 prev = prev * 0.85 + noise * 0.15
-                let chirp: Float = Float.random(in: 0...1) > 0.999
-                    ? sin(Float(i) * 0.15) * 0.1
-                    : 0
+                let chirp: Float = Float.random(in: 0...1) > 0.999 ? sin(Float(i) * 0.15) * 0.1 : 0
                 data[i] = prev + chirp
             }
         case .fan:
@@ -195,7 +215,6 @@ class AudioManager {
                 data[i] = value * 0.5
             }
         }
-
         return buffer
     }
 }

@@ -3,6 +3,8 @@ import SwiftUI
 struct AlarmRingingView: View {
     let cycles: Int
     let onDismiss: () -> Void
+    let onSnooze: () -> Void
+    @Environment(LocalizationManager.self) private var loc
 
     @State private var pulseScale: CGFloat = 1.0
 
@@ -10,27 +12,24 @@ struct AlarmRingingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Current time
             Text(Date(), style: .time)
                 .font(.system(size: 64, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .padding(.bottom, 8)
 
-            // Sleep summary
-            Text("You slept \(SleepCycleCalculator.formatDuration(cycles: cycles))")
+            Text("\(loc.t("you_slept")) \(SleepCycleCalculator.formatDuration(cycles: cycles))")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(.white.opacity(0.5))
 
             Spacer()
 
-            // Big dismiss button
             Button(action: onDismiss) {
                 VStack(spacing: 16) {
                     Image(systemName: "sunrise.fill")
                         .font(.system(size: 56))
                         .foregroundStyle(.yellow)
 
-                    Text("Good Morning")
+                    Text(loc.t("good_morning"))
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -41,9 +40,23 @@ struct AlarmRingingView: View {
             .scaleEffect(pulseScale)
             .padding(.horizontal, 32)
 
+            Button(action: onSnooze) {
+                HStack(spacing: 8) {
+                    Image(systemName: "moon.zzz")
+                        .font(.subheadline)
+                    Text(loc.t("snooze"))
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(.white.opacity(0.5))
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+            }
+            .glassEffect(.clear, in: .capsule)
+            .padding(.top, 20)
+
             Spacer()
 
-            Text("Tap to dismiss")
+            Text(loc.t("tap_dismiss"))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.3))
                 .padding(.bottom, 40)
@@ -59,7 +72,8 @@ struct AlarmRingingView: View {
 #Preview {
     ZStack {
         BreathingBackground()
-        AlarmRingingView(cycles: 4, onDismiss: {})
+        AlarmRingingView(cycles: 4, onDismiss: {}, onSnooze: {})
     }
+    .environment(LocalizationManager())
     .preferredColorScheme(.dark)
 }

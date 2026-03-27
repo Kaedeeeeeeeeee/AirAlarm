@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 enum OnboardingStep {
     case welcome
@@ -12,6 +13,8 @@ struct AirAlarmApp: App {
     @State private var showOnboarding = false
     @State private var currentStep: OnboardingStep = .welcome
     @State private var alarmManager = AlarmManager()
+    @State private var localization = LocalizationManager()
+    @State private var contentView: ContentView?
 
     var body: some Scene {
         WindowGroup {
@@ -20,13 +23,21 @@ struct AirAlarmApp: App {
                     BreathingBackground()
 
                     if alarmManager.isRinging {
-                        // Full-screen alarm page — on top of everything
-                        AlarmRingingView(cycles: alarmManager.scheduledCycles) {
-                            withAnimation(.smooth(duration: 0.5)) {
-                                alarmManager.stopRinging()
-                                alarmManager.cancelAlarm()
+                        AlarmRingingView(
+                            cycles: alarmManager.scheduledCycles,
+                            onDismiss: {
+                                // Save sleep record before dismissing
+                                withAnimation(.smooth(duration: 0.5)) {
+                                    alarmManager.stopRinging()
+                                    alarmManager.cancelAlarm()
+                                }
+                            },
+                            onSnooze: {
+                                withAnimation(.smooth(duration: 0.5)) {
+                                    alarmManager.snooze()
+                                }
                             }
-                        }
+                        )
                         .transition(.opacity)
                     } else if showOnboarding {
                         OnboardingView {
@@ -64,9 +75,12 @@ struct AirAlarmApp: App {
                 .animation(.smooth(duration: 0.7), value: showOnboarding)
                 .animation(.smooth(duration: 0.5), value: alarmManager.isRinging)
             }
+            .environment(localization)
+            .modelContainer(for: SleepRecord.self)
             .preferredColorScheme(.dark)
             .onAppear {
                 showOnboarding = !hasSeenOnboarding
+                BackgroundTaskManager.register(alarmManager: alarmManager)
             }
         }
     }
