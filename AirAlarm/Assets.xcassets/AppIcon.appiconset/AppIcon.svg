@@ -1,34 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0A0A2E"/>
-      <stop offset="100%" stop-color="#1A0A3E"/>
+      <stop offset="0%" stop-color="#141432"/>
+      <stop offset="100%" stop-color="#1A1A40"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.47" r="0.35">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
+    <!-- Arc gradient - brighter highlight -->
+    <linearGradient id="arcGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8E8EAE"/>
+      <stop offset="100%" stop-color="#C8C8E0"/>
+    </linearGradient>
   </defs>
 
   <!-- Background -->
   <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
 
-  <!-- Subtle glow -->
-  <rect width="1024" height="1024" rx="224" fill="url(#glow)"/>
+  <!-- Alarm bell - left top -->
+  <circle cx="300" cy="220" r="80" fill="#2A2A5A"/>
+  <!-- Alarm bell - right top -->
+  <circle cx="724" cy="220" r="80" fill="#2A2A5A"/>
 
-  <!-- Clock circle -->
-  <circle cx="512" cy="520" r="280" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="32"/>
+  <!-- Feet - left bottom -->
+  <line x1="340" y1="790" x2="260" y2="900"
+        stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/>
+  <!-- Feet - right bottom -->
+  <line x1="684" y1="790" x2="764" y2="900"
+        stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/>
+
+  <!-- Single circle ring -->
+  <circle cx="512" cy="512" r="290" fill="none" stroke="#2A2A5A" stroke-width="110"/>
+
+  <!-- Hour hand (shorter, pointing ~10 o'clock) -->
+  <line x1="512" y1="512" x2="445" y2="433"
+        stroke="#4A4A7A" stroke-width="52" stroke-linecap="round"/>
+
+  <!-- Minute hand (long, pointing 3 o'clock) -->
+  <line x1="512" y1="512" x2="680" y2="512"
+        stroke="#4A4A7A" stroke-width="36" stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="512" cy="512" r="30" fill="#4A4A7A"/>
 
   <!-- Wake window arc -->
-  <path d="M 512 240 A 280 280 0 0 1 730 400" fill="none" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="32" stroke-linecap="round"/>
-
-  <!-- Moon crescent -->
-  <circle cx="460" cy="440" r="110" fill="#FFFFFF" fill-opacity="0.85"/>
-  <circle cx="510" cy="400" r="90" fill="#0E0B28"/>
-
-  <!-- Stars -->
-  <circle cx="600" cy="340" r="8" fill="#FFFFFF" fill-opacity="0.7"/>
-  <circle cx="640" cy="400" r="5" fill="#FFFFFF" fill-opacity="0.5"/>
-  <circle cx="570" cy="300" r="4" fill="#FFFFFF" fill-opacity="0.4"/>
-  <circle cx="660" cy="340" r="3" fill="#FFFFFF" fill-opacity="0.3"/>
+  <path d="M 261 657 A 290 290 0 0 0 512 802"
+        fill="none" stroke="#D0D0E8" stroke-width="114" stroke-linecap="round"/>
 </svg>

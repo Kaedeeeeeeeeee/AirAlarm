@@ -1,17 +1,750 @@
-//
-//  AirAlarmTests.swift
-//  AirAlarmTests
-//
-//  Created by USER on 2026/03/26.
-//
-
 import Testing
+import Foundation
+import SwiftData
 @testable import AirAlarm
 
-struct AirAlarmTests {
+// MARK: - SleepCycleCalculator Tests
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+struct SleepCycleCalculatorTests {
+
+    // MARK: - optimalWakeTime
+
+    @Test func optimalWakeTime_multipleCyclesInWindow_returnsLatest() {
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        // Cycles: 0:30, 2:00, 3:30, 5:00, 6:30, 8:00
+        let earliest = makeDate(hour: 5, minute: 0, dayOffset: 1)
+        let latest = makeDate(hour: 8, minute: 0, dayOffset: 1)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        // 5 cycles = 7.5h = 6:30, 6 cycles = 9h = 8:00 — should pick 8:00 (latest)
+        #expect(result?.cycles == 6)
+        let expected = sleepTime.addingTimeInterval(6 * 90 * 60)
+        #expect(result?.wakeTime == expected)
     }
 
+    @Test func optimalWakeTime_singleCycleInWindow() {
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        // Only cycle 4 (6h = 5:00) falls in window
+        let earliest = makeDate(hour: 4, minute: 50, dayOffset: 1)
+        let latest = makeDate(hour: 5, minute: 10, dayOffset: 1)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        #expect(result?.cycles == 4)
+    }
+
+    @Test func optimalWakeTime_noCycleInWindow_returnsNil() {
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        // Window between two cycles: cycle 3 = 3:30, cycle 4 = 5:00
+        let earliest = makeDate(hour: 3, minute: 40, dayOffset: 1)
+        let latest = makeDate(hour: 4, minute: 50, dayOffset: 1)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result == nil)
+    }
+
+    @Test func optimalWakeTime_cycleExactlyAtWindowEdge() {
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        // Cycle 4 = 23:00 + 6h = 5:00 next day
+        let cycleTime = sleepTime.addingTimeInterval(4 * 90 * 60)
+        let earliest = cycleTime // exactly at earliest
+        let latest = cycleTime.addingTimeInterval(60) // 1 min after
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        #expect(result?.cycles == 4)
+        #expect(result?.wakeTime == cycleTime)
+    }
+
+    @Test func optimalWakeTime_cycleExactlyAtLatestEdge() {
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        let cycleTime = sleepTime.addingTimeInterval(5 * 90 * 60)
+        let earliest = cycleTime.addingTimeInterval(-60)
+        let latest = cycleTime // exactly at latest
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        #expect(result?.cycles == 5)
+    }
+
+    // MARK: - allCycleTimes
+
+    @Test func allCycleTimes_defaultCount_returns8Cycles() {
+        let sleepTime = makeDate(hour: 0, minute: 0)
+        let cycles = SleepCycleCalculator.allCycleTimes(from: sleepTime)
+
+        #expect(cycles.count == 8)
+
+        for (index, cycle) in cycles.enumerated() {
+            let expectedInterval = Double(index + 1) * 90 * 60
+            #expect(cycle.cycles == index + 1)
+            #expect(cycle.date.timeIntervalSince(sleepTime) == expectedInterval)
+        }
+    }
+
+    @Test func allCycleTimes_customCount() {
+        let sleepTime = makeDate(hour: 0, minute: 0)
+        let cycles = SleepCycleCalculator.allCycleTimes(from: sleepTime, count: 3)
+
+        #expect(cycles.count == 3)
+        #expect(cycles[0].cycles == 1)
+        #expect(cycles[2].cycles == 3)
+    }
+
+    @Test func allCycleTimes_intervalsAre90Minutes() {
+        let sleepTime = Date()
+        let cycles = SleepCycleCalculator.allCycleTimes(from: sleepTime)
+
+        for i in 1..<cycles.count {
+            let interval = cycles[i].date.timeIntervalSince(cycles[i - 1].date)
+            #expect(interval == 90 * 60)
+        }
+    }
+
+    // MARK: - formatDuration
+
+    @Test func formatDuration_wholeHours() {
+        // 4 cycles = 360 min = 6 hours
+        #expect(SleepCycleCalculator.formatDuration(cycles: 4) == "6 hours")
+        // 8 cycles = 720 min = 12 hours
+        #expect(SleepCycleCalculator.formatDuration(cycles: 8) == "12 hours")
+    }
+
+    @Test func formatDuration_withMinutes() {
+        // 1 cycle = 90 min = 1h 30m
+        #expect(SleepCycleCalculator.formatDuration(cycles: 1) == "1h 30m")
+        // 3 cycles = 270 min = 4h 30m
+        #expect(SleepCycleCalculator.formatDuration(cycles: 3) == "4h 30m")
+        // 5 cycles = 450 min = 7h 30m
+        #expect(SleepCycleCalculator.formatDuration(cycles: 5) == "7h 30m")
+    }
+
+    @Test func formatDuration_allCycleCounts() {
+        let expected = [
+            1: "1h 30m",
+            2: "3 hours",
+            3: "4h 30m",
+            4: "6 hours",
+            5: "7h 30m",
+            6: "9 hours",
+            7: "10h 30m",
+            8: "12 hours"
+        ]
+        for (cycles, text) in expected {
+            #expect(SleepCycleCalculator.formatDuration(cycles: cycles) == text)
+        }
+    }
+
+    // MARK: - cycleDuration constant
+
+    @Test func cycleDuration_is90Minutes() {
+        #expect(SleepCycleCalculator.cycleDuration == 5400) // 90 * 60
+    }
+
+    // MARK: - Helpers
+
+    private func makeDate(hour: Int, minute: Int, dayOffset: Int = 0) -> Date {
+        var cal = Calendar.current
+        cal.timeZone = TimeZone.current
+        var comps = cal.dateComponents([.year, .month, .day], from: Date())
+        comps.hour = hour
+        comps.minute = minute
+        comps.second = 0
+        var date = cal.date(from: comps)!
+        if dayOffset != 0 {
+            date = cal.date(byAdding: .day, value: dayOffset, to: date)!
+        }
+        return date
+    }
+}
+
+// MARK: - WhiteNoiseType Tests
+
+struct WhiteNoiseTypeTests {
+
+    @Test func allCases_containsFiveTypes() {
+        #expect(WhiteNoiseType.allCases.count == 5)
+    }
+
+    @Test func fileName_mappingsAreCorrect() {
+        #expect(WhiteNoiseType.rain.fileName == "rain")
+        #expect(WhiteNoiseType.ocean.fileName == "ocean")
+        #expect(WhiteNoiseType.forest.fileName == "forest")
+        #expect(WhiteNoiseType.fan.fileName == "fan")
+        #expect(WhiteNoiseType.pureTone.fileName == "whitenoise")
+    }
+
+    @Test func rawValue_roundTrip() {
+        for noise in WhiteNoiseType.allCases {
+            let restored = WhiteNoiseType(rawValue: noise.rawValue)
+            #expect(restored == noise)
+        }
+    }
+
+    @Test func rawValues_areDisplayStrings() {
+        #expect(WhiteNoiseType.rain.rawValue == "Rain")
+        #expect(WhiteNoiseType.ocean.rawValue == "Ocean")
+        #expect(WhiteNoiseType.forest.rawValue == "Forest")
+        #expect(WhiteNoiseType.fan.rawValue == "Fan")
+        #expect(WhiteNoiseType.pureTone.rawValue == "White Noise")
+    }
+
+    @Test func id_matchesRawValue() {
+        for noise in WhiteNoiseType.allCases {
+            #expect(noise.id == noise.rawValue)
+        }
+    }
+}
+
+// MARK: - AlarmManager Tests
+
+struct AlarmManagerTests {
+
+    @Test func initialState_isCorrect() {
+        let manager = AlarmManager()
+        #expect(manager.isAlarmScheduled == false)
+        #expect(manager.isRinging == false)
+        #expect(manager.scheduledWakeTime == nil)
+        #expect(manager.scheduledCycles == 0)
+        #expect(manager.snoozeCount == 0)
+    }
+
+    @Test func cancelAlarm_resetsAllState() {
+        let manager = AlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 5)
+        #expect(manager.isAlarmScheduled == true)
+        #expect(manager.scheduledCycles == 5)
+
+        manager.cancelAlarm()
+        #expect(manager.isAlarmScheduled == false)
+        #expect(manager.isRinging == false)
+        #expect(manager.scheduledWakeTime == nil)
+        #expect(manager.scheduledCycles == 0)
+        #expect(manager.snoozeCount == 0)
+    }
+
+    @Test func stopRinging_resetsRingingState() {
+        let manager = AlarmManager()
+        manager.stopRinging()
+        #expect(manager.isRinging == false)
+    }
+
+    @Test func scheduleAlarm_setsState() {
+        let manager = AlarmManager()
+        let wakeTime = Date().addingTimeInterval(7200)
+        manager.scheduleAlarm(at: wakeTime, cycles: 4)
+
+        #expect(manager.isAlarmScheduled == true)
+        #expect(manager.scheduledWakeTime == wakeTime)
+        #expect(manager.scheduledCycles == 4)
+    }
+
+    @Test func scheduleAlarm_pastTime_doesNotSchedule() {
+        let manager = AlarmManager()
+        let pastTime = Date().addingTimeInterval(-60)
+        manager.scheduleAlarm(at: pastTime, cycles: 3)
+
+        #expect(manager.isAlarmScheduled == false)
+    }
+
+    // MARK: - Snooze
+
+    @Test func snooze_incrementsSnoozeCount() {
+        let manager = AlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 4)
+        #expect(manager.snoozeCount == 0)
+
+        manager.snooze(minutes: 5)
+        #expect(manager.snoozeCount == 1)
+
+        manager.snooze(minutes: 5)
+        #expect(manager.snoozeCount == 2)
+    }
+
+    @Test func snooze_reschedulesAlarm() {
+        let manager = AlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 4)
+
+        let beforeSnooze = Date()
+        manager.snooze(minutes: 5)
+
+        // After snooze, alarm should still be scheduled
+        #expect(manager.isAlarmScheduled == true)
+        // Cycles should be preserved
+        #expect(manager.scheduledCycles == 4)
+        // New wake time should be ~5 minutes from now
+        if let newWakeTime = manager.scheduledWakeTime {
+            let interval = newWakeTime.timeIntervalSince(beforeSnooze)
+            #expect(interval > 290) // ~5 min, with small tolerance
+            #expect(interval < 310)
+        } else {
+            Issue.record("scheduledWakeTime should not be nil after snooze")
+        }
+    }
+
+    @Test func snooze_stopsRinging() {
+        let manager = AlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 4)
+        manager.snooze(minutes: 5)
+        // stopRinging is called inside snooze, so isRinging should be false
+        #expect(manager.isRinging == false)
+    }
+
+    @Test func cancelAlarm_resetsSnoozeCount() {
+        let manager = AlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 4)
+        manager.snooze(minutes: 5)
+        manager.snooze(minutes: 5)
+        #expect(manager.snoozeCount == 2)
+
+        manager.cancelAlarm()
+        #expect(manager.snoozeCount == 0)
+    }
+}
+
+// MARK: - AudioManager Tests
+
+struct AudioManagerTests {
+
+    @Test func initialState_isCorrect() {
+        let manager = AudioManager()
+        #expect(manager.isPlaying == false)
+        #expect(manager.sleepDetected == false)
+        #expect(manager.sleepTime == nil)
+        #expect(manager.volume == 0.7)
+        #expect(manager.isConfirmingSleep == false)
+    }
+
+    @Test func stop_resetsAllState() {
+        let manager = AudioManager()
+        manager.stop()
+        #expect(manager.isPlaying == false)
+        #expect(manager.isConfirmingSleep == false)
+    }
+
+    @Test func setVolume_updatesVolume() {
+        let manager = AudioManager()
+        manager.setVolume(0.3)
+        #expect(manager.volume == 0.3)
+
+        manager.setVolume(1.0)
+        #expect(manager.volume == 1.0)
+
+        manager.setVolume(0.0)
+        #expect(manager.volume == 0.0)
+    }
+
+    @Test func defaultVolume_is0point7() {
+        let manager = AudioManager()
+        #expect(manager.volume == 0.7)
+    }
+}
+
+// MARK: - AppState Tests
+
+struct AppStateTests {
+
+    @Test func allStatesExist() {
+        let states: [AppState] = [.idle, .playingNoise, .sleepDetected, .alarmSet]
+        #expect(states.count == 4)
+    }
+
+    @Test func statesAreDistinct() {
+        let idle: AppState = .idle
+        let playing: AppState = .playingNoise
+        let detected: AppState = .sleepDetected
+        let set: AppState = .alarmSet
+
+        switch idle {
+        case .idle: break
+        default: Issue.record("idle should match .idle")
+        }
+        switch playing {
+        case .playingNoise: break
+        default: Issue.record("playing should match .playingNoise")
+        }
+        switch detected {
+        case .sleepDetected: break
+        default: Issue.record("detected should match .sleepDetected")
+        }
+        switch set {
+        case .alarmSet: break
+        default: Issue.record("set should match .alarmSet")
+        }
+    }
+}
+
+// MARK: - SleepRecord Tests
+
+struct SleepRecordTests {
+
+    // MARK: - Initialization
+
+    @Test func init_setsAllProperties() {
+        let sleep = Date(timeIntervalSince1970: 1711500000) // fixed time
+        let wake = sleep.addingTimeInterval(6 * 3600) // 6 hours later
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 4, noiseType: "Rain")
+
+        #expect(record.sleepTime == sleep)
+        #expect(record.wakeTime == wake)
+        #expect(record.cycles == 4)
+        #expect(record.noiseType == "Rain")
+    }
+
+    @Test func init_setsDateToStartOfWakeDay() {
+        let sleep = Date(timeIntervalSince1970: 1711500000)
+        let wake = sleep.addingTimeInterval(6 * 3600)
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 4, noiseType: "Rain")
+
+        let expectedDate = Calendar.current.startOfDay(for: wake)
+        #expect(record.date == expectedDate)
+    }
+
+    // MARK: - duration
+
+    @Test func duration_calculatesCorrectInterval() {
+        let sleep = Date(timeIntervalSince1970: 1711500000)
+        let wake = sleep.addingTimeInterval(7.5 * 3600) // 7.5 hours
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 5, noiseType: "Ocean")
+
+        #expect(record.duration == 7.5 * 3600)
+    }
+
+    @Test func duration_exactCycles() {
+        let sleep = Date()
+        // 4 cycles = 6 hours exactly
+        let wake = sleep.addingTimeInterval(4 * 90 * 60)
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 4, noiseType: "Fan")
+
+        #expect(record.duration == 4 * 90 * 60)
+    }
+
+    // MARK: - durationText
+
+    @Test func durationText_wholeHours() {
+        let sleep = Date()
+        let wake = sleep.addingTimeInterval(6 * 3600) // exactly 6 hours
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 4, noiseType: "Rain")
+
+        #expect(record.durationText == "6h")
+    }
+
+    @Test func durationText_hoursAndMinutes() {
+        let sleep = Date()
+        let wake = sleep.addingTimeInterval(7.5 * 3600) // 7h 30m
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 5, noiseType: "Rain")
+
+        #expect(record.durationText == "7h 30m")
+    }
+
+    @Test func durationText_shortSleep() {
+        let sleep = Date()
+        let wake = sleep.addingTimeInterval(90 * 60) // 1h 30m = 1 cycle
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 1, noiseType: "Forest")
+
+        #expect(record.durationText == "1h 30m")
+    }
+
+    @Test func durationText_withOddMinutes() {
+        let sleep = Date()
+        let wake = sleep.addingTimeInterval(5 * 3600 + 15 * 60) // 5h 15m
+
+        let record = SleepRecord(sleepTime: sleep, wakeTime: wake, cycles: 3, noiseType: "Fan")
+
+        #expect(record.durationText == "5h 15m")
+    }
+}
+
+// MARK: - LocalizationManager Tests
+
+@Suite(.serialized)
+struct LocalizationManagerTests {
+
+    // MARK: - Language enum
+
+    @Test func language_allCases_containsThree() {
+        #expect(LocalizationManager.Language.allCases.count == 3)
+    }
+
+    @Test func language_rawValues() {
+        #expect(LocalizationManager.Language.english.rawValue == "en")
+        #expect(LocalizationManager.Language.chinese.rawValue == "zh")
+        #expect(LocalizationManager.Language.japanese.rawValue == "ja")
+    }
+
+    @Test func language_displayNames() {
+        #expect(LocalizationManager.Language.english.displayName == "English")
+        #expect(LocalizationManager.Language.chinese.displayName == "中文")
+        #expect(LocalizationManager.Language.japanese.displayName == "日本語")
+    }
+
+    @Test func language_id_matchesRawValue() {
+        for lang in LocalizationManager.Language.allCases {
+            #expect(lang.id == lang.rawValue)
+        }
+    }
+
+    @Test func language_rawValue_roundTrip() {
+        for lang in LocalizationManager.Language.allCases {
+            let restored = LocalizationManager.Language(rawValue: lang.rawValue)
+            #expect(restored == lang)
+        }
+    }
+
+    // MARK: - Translation
+
+    @Test func t_english_returnsCorrectTranslation() {
+        let loc = LocalizationManager()
+        loc.current = .english
+
+        #expect(loc.t("wake_window") == "Wake Window")
+        #expect(loc.t("good_morning") == "Good Morning")
+        #expect(loc.t("start") == "Start")
+        #expect(loc.t("settings") == "Settings")
+        #expect(loc.t("snooze") == "5 more minutes")
+    }
+
+    @Test func t_chinese_returnsCorrectTranslation() {
+        let loc = LocalizationManager()
+        loc.current = .chinese
+
+        #expect(loc.t("wake_window") == "唤醒窗口")
+        #expect(loc.t("good_morning") == "早上好")
+        #expect(loc.t("start") == "开始")
+        #expect(loc.t("settings") == "设置")
+        #expect(loc.t("snooze") == "再睡5分钟")
+    }
+
+    @Test func t_japanese_returnsCorrectTranslation() {
+        let loc = LocalizationManager()
+        loc.current = .japanese
+
+        #expect(loc.t("wake_window") == "起床ウィンドウ")
+        #expect(loc.t("good_morning") == "おはようございます")
+        #expect(loc.t("start") == "スタート")
+        #expect(loc.t("settings") == "設定")
+        #expect(loc.t("snooze") == "あと5分")
+    }
+
+    @Test func t_unknownKey_returnsKeyItself() {
+        let loc = LocalizationManager()
+        loc.current = .english
+
+        #expect(loc.t("nonexistent_key") == "nonexistent_key")
+        #expect(loc.t("") == "")
+        #expect(loc.t("some_random_thing") == "some_random_thing")
+    }
+
+    @Test func t_chinese_hasAllRequiredKeys() {
+        let loc = LocalizationManager()
+        loc.current = .chinese
+        let requiredKeys = [
+            "wake_window", "drag_hint", "good_morning", "tap_dismiss",
+            "snooze", "you_slept", "playing", "start", "settings",
+            "language", "history", "about", "volume", "no_history",
+            "sleep_time", "wake_time", "cycles", "detecting_sleep",
+            "ready_sleep", "lets_go", "next", "skip",
+            "earliest_wake", "latest_wake"
+        ]
+        for key in requiredKeys {
+            #expect(loc.t(key) != key, "Missing Chinese translation for '\(key)'")
+        }
+    }
+
+    @Test func t_japanese_hasAllRequiredKeys() {
+        let loc = LocalizationManager()
+        loc.current = .japanese
+        let requiredKeys = [
+            "wake_window", "drag_hint", "good_morning", "tap_dismiss",
+            "snooze", "you_slept", "playing", "start", "settings",
+            "language", "history", "about", "volume", "no_history",
+            "sleep_time", "wake_time", "cycles", "detecting_sleep",
+            "ready_sleep", "lets_go", "next", "skip",
+            "earliest_wake", "latest_wake"
+        ]
+        for key in requiredKeys {
+            #expect(loc.t(key) != key, "Missing Japanese translation for '\(key)'")
+        }
+    }
+
+    @Test func t_switchingLanguage_changesOutput() {
+        let loc = LocalizationManager()
+
+        loc.current = .english
+        let english = loc.t("good_morning")
+
+        loc.current = .chinese
+        let chinese = loc.t("good_morning")
+
+        loc.current = .japanese
+        let japanese = loc.t("good_morning")
+
+        // All three should be different
+        #expect(english != chinese)
+        #expect(english != japanese)
+        #expect(chinese != japanese)
+    }
+
+    // MARK: - Persistence
+    // Note: Tests that write/read UserDefaults are serialized to avoid races.
+
+    @Test func languageChange_persistsToUserDefaults() {
+        let loc = LocalizationManager()
+        loc.current = .japanese
+        #expect(UserDefaults.standard.string(forKey: "appLanguage") == "ja")
+
+        loc.current = .chinese
+        #expect(UserDefaults.standard.string(forKey: "appLanguage") == "zh")
+
+        // Clean up
+        loc.current = .english
+    }
+
+    @Test func init_restoresFromUserDefaults() {
+        UserDefaults.standard.set("ja", forKey: "appLanguage")
+        let loc = LocalizationManager()
+        #expect(loc.current == .japanese)
+
+        // Clean up
+        UserDefaults.standard.set("en", forKey: "appLanguage")
+    }
+
+    @Test func init_invalidStoredValue_defaultsToEnglish() {
+        UserDefaults.standard.set("invalid_lang", forKey: "appLanguage")
+        let loc = LocalizationManager()
+        #expect(loc.current == .english)
+
+        // Clean up
+        UserDefaults.standard.removeObject(forKey: "appLanguage")
+    }
+
+    // MARK: - Bedtime Reminder Translations
+
+    @Test func t_bedtimeReminder_english() {
+        let loc = LocalizationManager()
+        loc.current = .english
+        #expect(loc.t("bedtime_reminder") == "Bedtime Reminder")
+        #expect(loc.t("reminder_time") == "Reminder Time")
+    }
+
+    @Test func t_bedtimeReminder_chinese() {
+        let loc = LocalizationManager()
+        loc.current = .chinese
+        #expect(loc.t("bedtime_reminder") == "就寝提醒")
+        #expect(loc.t("reminder_time") == "提醒时间")
+    }
+
+    @Test func t_bedtimeReminder_japanese() {
+        let loc = LocalizationManager()
+        loc.current = .japanese
+        #expect(loc.t("bedtime_reminder") == "就寝リマインダー")
+        #expect(loc.t("reminder_time") == "リマインダー時間")
+    }
+}
+
+// MARK: - BedtimeReminderManager Tests
+
+struct BedtimeReminderManagerTests {
+
+    @Test func schedule_doesNotThrow() {
+        // Just verify it can be called without crashing
+        BedtimeReminderManager.schedule(hour: 22, minute: 30)
+    }
+
+    @Test func cancel_doesNotThrow() {
+        BedtimeReminderManager.cancel()
+    }
+
+    @Test func schedule_thenCancel_doesNotThrow() {
+        BedtimeReminderManager.schedule(hour: 23, minute: 0)
+        BedtimeReminderManager.cancel()
+    }
+
+    @Test func schedule_variousTimes() {
+        // Edge cases for hour/minute
+        BedtimeReminderManager.schedule(hour: 0, minute: 0)    // midnight
+        BedtimeReminderManager.schedule(hour: 12, minute: 0)   // noon
+        BedtimeReminderManager.schedule(hour: 23, minute: 59)  // last minute of day
+        BedtimeReminderManager.cancel()
+    }
+}
+
+// MARK: - StartSleepIntent Tests
+
+struct StartSleepIntentTests {
+
+    @Test func intent_hasCorrectTitle() {
+        #expect(StartSleepIntent.title == "Start Sleep Session")
+    }
+
+    @Test func intent_opensApp() {
+        #expect(StartSleepIntent.openAppWhenRun == true)
+    }
+
+    @Test func intent_canBeInstantiated() {
+        let intent = StartSleepIntent()
+        #expect(intent != nil)
+    }
+
+    @Test func shortcuts_hasEntries() {
+        let shortcuts = AirAlarmShortcuts.appShortcuts
+        #expect(shortcuts.count == 1)
+    }
+}
+
+// MARK: - Widget Data Keys Tests
+
+struct WidgetDataTests {
+
+    @Test func sharedDefaults_writeAndRead() {
+        // Test that we can write/read from the shared suite
+        // Note: In unit tests, App Groups might not be available,
+        // so we test with standard UserDefaults as a proxy
+        let defaults = UserDefaults.standard
+        let testKey = "test_lastSleepDuration"
+
+        defaults.set("7h 30m", forKey: testKey)
+        #expect(defaults.string(forKey: testKey) == "7h 30m")
+
+        defaults.set(5, forKey: "test_lastSleepCycles")
+        #expect(defaults.integer(forKey: "test_lastSleepCycles") == 5)
+
+        let date = Date()
+        defaults.set(date, forKey: "test_lastSleepDate")
+        let restored = defaults.object(forKey: "test_lastSleepDate") as? Date
+        #expect(restored != nil)
+
+        // Clean up
+        defaults.removeObject(forKey: testKey)
+        defaults.removeObject(forKey: "test_lastSleepCycles")
+        defaults.removeObject(forKey: "test_lastSleepDate")
+    }
 }
