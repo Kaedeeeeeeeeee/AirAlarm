@@ -11,16 +11,24 @@ struct AirAlarmApp: App {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var showOnboarding = false
     @State private var currentStep: OnboardingStep = .welcome
+    @State private var alarmManager = AlarmManager()
 
     var body: some Scene {
         WindowGroup {
             GlassEffectContainer {
                 ZStack {
-                    // Shared persistent background — never removed during transitions
                     BreathingBackground()
 
-                    // Foreground content with smooth transitions
-                    if showOnboarding {
+                    if alarmManager.isRinging {
+                        // Full-screen alarm page — on top of everything
+                        AlarmRingingView(cycles: alarmManager.scheduledCycles) {
+                            withAnimation(.smooth(duration: 0.5)) {
+                                alarmManager.stopRinging()
+                                alarmManager.cancelAlarm()
+                            }
+                        }
+                        .transition(.opacity)
+                    } else if showOnboarding {
                         OnboardingView {
                             hasSeenOnboarding = true
                             withAnimation(.smooth(duration: 0.7)) {
@@ -46,7 +54,7 @@ struct AirAlarmApp: App {
                                 }
 
                             case .alarmSetup:
-                                ContentView()
+                                ContentView(alarmManager: alarmManager)
                             }
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -54,6 +62,7 @@ struct AirAlarmApp: App {
                 }
                 .animation(.smooth(duration: 0.7), value: currentStep)
                 .animation(.smooth(duration: 0.7), value: showOnboarding)
+                .animation(.smooth(duration: 0.5), value: alarmManager.isRinging)
             }
             .preferredColorScheme(.dark)
             .onAppear {

@@ -9,7 +9,7 @@ enum AppState {
 
 struct ContentView: View {
     @State private var audioManager = AudioManager()
-    @State private var alarmManager = AlarmManager()
+    var alarmManager: AlarmManager
 
     @State private var selectedNoise: WhiteNoiseType = .rain
     @State private var wakeWindowStart = Calendar.current.date(
@@ -32,6 +32,23 @@ struct ContentView: View {
         VStack(spacing: 0) {
             ZStack {
                 VStack(spacing: 0) {
+                    // DEBUG: Test alarm (remove before release)
+                    HStack {
+                        Spacer()
+                        Button {
+                            alarmManager.scheduleAlarm(at: Date().addingTimeInterval(2), cycles: 4)
+                            withAnimation(.spring(duration: 0.4)) { appState = .alarmSet }
+                        } label: {
+                            Image(systemName: "bell.badge")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.4))
+                                .padding(10)
+                        }
+                        .glassEffect(.clear, in: .circle)
+                    }
+                    .padding(.trailing, 8)
+                    .padding(.top, 4)
+
                     Spacer()
 
                     // Wake window info
@@ -61,13 +78,6 @@ struct ContentView: View {
                         playingStatus
                             .transition(.scale.combined(with: .opacity))
                             .padding(.top, 16)
-                    }
-
-                    // Dismiss alarm button (when ringing)
-                    if alarmManager.isRinging {
-                        dismissAlarmButton
-                            .transition(.scale.combined(with: .opacity))
-                            .padding(.top, 24)
                     }
 
                     Spacer()
@@ -129,32 +139,6 @@ struct ContentView: View {
         }
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.white.opacity(0.6))
-    }
-
-    // MARK: - Dismiss Alarm
-
-    private var dismissAlarmButton: some View {
-        Button {
-            withAnimation(.spring(duration: 0.4)) {
-                alarmManager.stopRinging()
-                alarmManager.cancelAlarm()
-                appState = .idle
-            }
-        } label: {
-            VStack(spacing: 8) {
-                Image(systemName: "sunrise.fill")
-                    .font(.system(size: 32))
-                Text("Good Morning")
-                    .font(.headline)
-                Text("Tap to dismiss")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 40)
-            .padding(.vertical, 20)
-        }
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Alarm Info Pill
@@ -284,5 +268,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(alarmManager: AlarmManager())
 }
