@@ -36,8 +36,8 @@ struct AlarmRingingView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 48)
+                .glassEffect(.regular, in: .rect(cornerRadius: 28))
             }
-            .glassEffect(.regular, in: .rect(cornerRadius: 24))
             .scaleEffect(pulseScale)
             .padding(.horizontal, 32)
 

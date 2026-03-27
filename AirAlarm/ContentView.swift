@@ -29,10 +29,14 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                VStack(spacing: 0) {
-                    // DEBUG: Test alarm (remove before release)
+        ZStack {
+            // Noise-type tinted overlay
+            noiseTintOverlay
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 1.5), value: selectedNoise)
+
+            VStack(spacing: 0) {
+                    #if DEBUG
                     HStack {
                         Spacer()
                         Button {
@@ -48,6 +52,7 @@ struct ContentView: View {
                     }
                     .padding(.trailing, 8)
                     .padding(.top, 4)
+                    #endif
 
                     Spacer()
 
@@ -88,12 +93,16 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 20)
             }
-        }
         .task {
             hasNotificationPermission = await alarmManager.requestPermission()
             restoreSettings()
         }
-        .onChange(of: selectedNoise) { _, new in lastNoiseRawValue = new.rawValue }
+        .onChange(of: selectedNoise) { _, new in
+            lastNoiseRawValue = new.rawValue
+            if appState == .playingNoise {
+                audioManager.startWhiteNoise(type: new) { onSleepDetected() }
+            }
+        }
         .onChange(of: wakeWindowStart) { _, new in
             let cal = Calendar.current
             storedHour = cal.component(.hour, from: new)
@@ -182,6 +191,19 @@ struct ContentView: View {
             }
             .padding(.horizontal, 16)
         }
+    }
+
+    // MARK: - Noise Tint Overlay
+
+    private var noiseTintOverlay: some View {
+        let color: Color = switch selectedNoise {
+        case .rain:      Color(red: 0.05, green: 0.08, blue: 0.22)
+        case .ocean:     Color(red: 0.02, green: 0.06, blue: 0.26)
+        case .forest:    Color(red: 0.03, green: 0.14, blue: 0.08)
+        case .fan:       Color(red: 0.07, green: 0.07, blue: 0.10)
+        case .pureTone:  Color(red: 0.10, green: 0.05, blue: 0.22)
+        }
+        return color.opacity(0.6)
     }
 
     // MARK: - Helpers
