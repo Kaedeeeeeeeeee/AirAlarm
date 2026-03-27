@@ -26,7 +26,13 @@ struct AirAlarmApp: App {
                         AlarmRingingView(
                             cycles: alarmManager.scheduledCycles,
                             onDismiss: {
-                                // Save sleep record before dismissing
+                                // Save widget data
+                                let duration = SleepCycleCalculator.formatDuration(cycles: alarmManager.scheduledCycles)
+                                let defaults = UserDefaults(suiteName: "group.airalarm")
+                                defaults?.set(duration, forKey: "lastSleepDuration")
+                                defaults?.set(alarmManager.scheduledCycles, forKey: "lastSleepCycles")
+                                defaults?.set(Date(), forKey: "lastSleepDate")
+
                                 withAnimation(.smooth(duration: 0.5)) {
                                     alarmManager.stopRinging()
                                     alarmManager.cancelAlarm()
@@ -81,6 +87,16 @@ struct AirAlarmApp: App {
             .onAppear {
                 showOnboarding = !hasSeenOnboarding
                 BackgroundTaskManager.register(alarmManager: alarmManager)
+            }
+            .onOpenURL { url in
+                if url.host == "start" {
+                    // Skip to alarm setup and auto-start would need AudioManager access
+                    // For now, just navigate to the main screen
+                    withAnimation(.smooth(duration: 0.5)) {
+                        showOnboarding = false
+                        currentStep = .alarmSetup
+                    }
+                }
             }
         }
     }

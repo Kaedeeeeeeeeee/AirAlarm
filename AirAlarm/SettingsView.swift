@@ -4,11 +4,44 @@ struct SettingsView: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.dismiss) private var dismiss
 
+    @AppStorage("bedtimeReminderEnabled") private var reminderEnabled = false
+    @AppStorage("bedtimeReminderHour") private var reminderHour = 22
+    @AppStorage("bedtimeReminderMinute") private var reminderMinute = 30
+
+    @State private var reminderTime = Calendar.current.date(
+        bySettingHour: 22, minute: 30, second: 0, of: Date()
+    ) ?? Date()
+
     var body: some View {
         @Bindable var loc = loc
 
         NavigationStack {
             List {
+                // Bedtime Reminder
+                Section {
+                    Toggle(loc.t("bedtime_reminder"), isOn: $reminderEnabled)
+                        .onChange(of: reminderEnabled) { _, enabled in
+                            if enabled {
+                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute)
+                            } else {
+                                BedtimeReminderManager.cancel()
+                            }
+                        }
+
+                    if reminderEnabled {
+                        DatePicker(loc.t("reminder_time"), selection: $reminderTime, displayedComponents: .hourAndMinute)
+                            .onChange(of: reminderTime) { _, newTime in
+                                let cal = Calendar.current
+                                reminderHour = cal.component(.hour, from: newTime)
+                                reminderMinute = cal.component(.minute, from: newTime)
+                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute)
+                            }
+                    }
+                } header: {
+                    Text(loc.t("bedtime_reminder"))
+                }
+                .listRowBackground(Color.white.opacity(0.05))
+
                 // Language
                 Section {
                     Picker(loc.t("language"), selection: $loc.current) {
@@ -57,5 +90,10 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            reminderTime = Calendar.current.date(
+                bySettingHour: reminderHour, minute: reminderMinute, second: 0, of: Date()
+            ) ?? Date()
+        }
     }
 }

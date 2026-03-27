@@ -63,6 +63,8 @@ class LocalizationManager {
             "skip": "Skip for Now",
             "earliest_wake": "Earliest Wake",
             "latest_wake": "Latest Wake",
+            "bedtime_reminder": "Bedtime Reminder",
+            "reminder_time": "Reminder Time",
         ],
         .chinese: [
             "wake_window": "唤醒窗口",
@@ -95,6 +97,8 @@ class LocalizationManager {
             "skip": "暂时跳过",
             "earliest_wake": "最早唤醒",
             "latest_wake": "最晚唤醒",
+            "bedtime_reminder": "就寝提醒",
+            "reminder_time": "提醒时间",
         ],
         .japanese: [
             "wake_window": "起床ウィンドウ",
@@ -127,6 +131,8 @@ class LocalizationManager {
             "skip": "スキップ",
             "earliest_wake": "最早起床",
             "latest_wake": "最遅起床",
+            "bedtime_reminder": "就寝リマインダー",
+            "reminder_time": "リマインダー時間",
         ]
     ]
 }
