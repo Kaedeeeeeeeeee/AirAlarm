@@ -39,6 +39,8 @@ struct AlarmRingingView: View {
             }
             .scaleEffect(pulseScale)
             .padding(.horizontal, 32)
+            .accessibilityLabel(loc.t("good_morning"))
+            .accessibilityHint(loc.t("tap_dismiss"))
 
             Button(action: onSnooze) {
                 HStack(spacing: 8) {
@@ -53,6 +55,7 @@ struct AlarmRingingView: View {
             }
             .glassEffect(.clear, in: .capsule)
             .padding(.top, 20)
+            .accessibilityLabel(loc.t("snooze"))
 
             Spacer()
 

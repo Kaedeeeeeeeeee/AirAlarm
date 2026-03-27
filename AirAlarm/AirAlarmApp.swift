@@ -28,7 +28,7 @@ struct AirAlarmApp: App {
                             onDismiss: {
                                 // Save widget data
                                 let duration = SleepCycleCalculator.formatDuration(cycles: alarmManager.scheduledCycles)
-                                let defaults = UserDefaults(suiteName: "group.airalarm")
+                                let defaults = UserDefaults(suiteName: "group.com.zhangshifeng.airalarm")
                                 defaults?.set(duration, forKey: "lastSleepDuration")
                                 defaults?.set(alarmManager.scheduledCycles, forKey: "lastSleepCycles")
                                 defaults?.set(Date(), forKey: "lastSleepDate")

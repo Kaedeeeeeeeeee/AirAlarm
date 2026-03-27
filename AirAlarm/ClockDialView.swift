@@ -245,7 +245,17 @@ struct ClockDialView: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(centerButtonLabel)
         .position(center)
+    }
+
+    private var centerButtonLabel: String {
+        switch appState {
+        case .idle: "Start"
+        case .playingNoise: "Stop"
+        case .sleepDetected: "Detecting sleep"
+        case .alarmSet: "Cancel alarm"
+        }
     }
 
     private var waveformAnimation: some View {

@@ -3,27 +3,20 @@ import SwiftUI
 struct OnboardingView: View {
     let onFinish: () -> Void
 
+    @Environment(LocalizationManager.self) private var loc
     @State private var currentPage = 0
 
     var body: some View {
         ZStack {
             // Background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.04, green: 0.04, blue: 0.14),
-                    Color(red: 0.08, green: 0.06, blue: 0.22)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            BreathingBackground()
 
             VStack(spacing: 0) {
                 // Pages
                 TabView(selection: $currentPage) {
-                    SleepCyclePage().tag(0)
-                    AirPodsPage().tag(1)
-                    WakeWindowPage().tag(2)
+                    SleepCyclePage(loc: loc).tag(0)
+                    AirPodsPage(loc: loc).tag(1)
+                    WakeWindowPage(loc: loc).tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
 
@@ -37,7 +30,7 @@ struct OnboardingView: View {
                         onFinish()
                     }
                 } label: {
-                    Text(currentPage < 2 ? "Next" : "Get Started")
+                    Text(currentPage < 2 ? loc.t("next") : loc.t("get_started"))
                         .font(.headline)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -55,6 +48,7 @@ struct OnboardingView: View {
 // MARK: - Page 1: Sleep Cycles
 
 private struct SleepCyclePage: View {
+    let loc: LocalizationManager
     @State private var waveProgress: CGFloat = 0
     @State private var showMarker = false
 
@@ -73,7 +67,7 @@ private struct SleepCyclePage: View {
                 // "90 min" labels — centered under each cycle
                 if waveProgress > 0.3 {
                     ForEach(0..<4, id: \.self) { i in
-                        Text("90 min")
+                        Text(loc.t("ninety_min"))
                             .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(.white.opacity(0.3))
                             .position(x: CGFloat(37.5 + Double(i) * 75), y: 110)
@@ -86,7 +80,7 @@ private struct SleepCyclePage: View {
                 // 3rd peak is at x = (2.75/4) * 300 = 206, y = midY - amplitude = 48 - 42 = 6
                 if showMarker {
                     VStack(spacing: 2) {
-                        Text("Best time to wake")
+                        Text(loc.t("best_wake_time"))
                             .font(.system(size: 8, weight: .medium))
                             .foregroundStyle(.yellow.opacity(0.8))
                         Image(systemName: "star.fill")
@@ -110,11 +104,11 @@ private struct SleepCyclePage: View {
             }
 
             VStack(spacing: 12) {
-                Text("Sleep Smarter, Not Longer")
+                Text(loc.t("onboarding_title_1"))
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("Your sleep follows 90-minute cycles.\nWaking at the end of a cycle feels refreshing.\nWaking mid-cycle feels groggy —\neven with enough sleep.")
+                Text(loc.t("onboarding_desc_1"))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.5))
                     .multilineTextAlignment(.center)
@@ -155,6 +149,7 @@ private struct SleepWavePath: Shape {
 // MARK: - Page 2: AirPods Detection
 
 private struct AirPodsPage: View {
+    let loc: LocalizationManager
     @State private var phase = 0
 
     var body: some View {
@@ -189,12 +184,12 @@ private struct AirPodsPage: View {
             .onAppear { runSequence() }
 
             VStack(spacing: 12) {
-                Text("Your AirPods Know\nWhen You Sleep")
+                Text(loc.t("onboarding_title_2"))
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
-                Text("AirAlarm plays soothing sounds through\nyour AirPods. When they detect you've\nfallen asleep, we start counting\nyour sleep cycles.")
+                Text(loc.t("onboarding_desc_2"))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.5))
                     .multilineTextAlignment(.center)
@@ -221,6 +216,7 @@ private struct AirPodsPage: View {
 // MARK: - Page 3: Wake Window
 
 private struct WakeWindowPage: View {
+    let loc: LocalizationManager
     @State private var arcRotation: Double = 0
 
     var body: some View {
@@ -264,7 +260,7 @@ private struct WakeWindowPage: View {
                 .rotationEffect(.degrees(arcRotation))
 
                 // "90 min" in center (doesn't rotate)
-                Text("90 min")
+                Text(loc.t("ninety_min"))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -276,11 +272,11 @@ private struct WakeWindowPage: View {
             }
 
             VStack(spacing: 12) {
-                Text("Set Your Wake Window")
+                Text(loc.t("onboarding_title_3"))
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("Choose when you'd like to wake up.\nAirAlarm picks the perfect moment\nwithin your 90-minute window —\nright at the end of a sleep cycle.")
+                Text(loc.t("onboarding_desc_3"))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.5))
                     .multilineTextAlignment(.center)

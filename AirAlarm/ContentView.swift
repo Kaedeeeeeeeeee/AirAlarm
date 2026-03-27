@@ -48,6 +48,7 @@ struct ContentView: View {
                             .padding(10)
                     }
                     .glassEffect(.clear, in: .circle)
+                    .accessibilityLabel(loc.t("settings"))
 
                     Spacer()
 
@@ -178,6 +179,7 @@ struct ContentView: View {
                 }
             ), in: 0...1)
             .tint(.white.opacity(0.5))
+            .accessibilityLabel(loc.t("volume"))
             Image(systemName: "speaker.wave.3.fill")
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.35))
@@ -232,6 +234,8 @@ struct ContentView: View {
                         .foregroundStyle(selectedNoise == noise ? .white : .white.opacity(0.5))
                     }
                     .glassEffect(selectedNoise == noise ? .regular : .clear, in: .capsule)
+                    .accessibilityLabel(noise.rawValue)
+                    .accessibilityAddTraits(selectedNoise == noise ? .isSelected : [])
                 }
             }
             .padding(.horizontal, 16)

@@ -1,7 +1,7 @@
 import BackgroundTasks
 
 enum BackgroundTaskManager {
-    static let alarmCheckID = "com.airalarm.alarmcheck"
+    static let alarmCheckID = "com.zhangshifeng.airalarm.alarmcheck"
 
     static func register(alarmManager: AlarmManager) {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: alarmCheckID, using: nil) { task in

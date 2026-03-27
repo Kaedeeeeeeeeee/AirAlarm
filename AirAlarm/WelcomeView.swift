@@ -3,6 +3,7 @@ import SwiftUI
 struct WelcomeView: View {
     let onContinue: () -> Void
 
+    @Environment(LocalizationManager.self) private var loc
     @State private var appeared = false
 
     var body: some View {
@@ -15,12 +16,12 @@ struct WelcomeView: View {
                 .symbolEffect(.breathe, isActive: appeared)
                 .padding(.bottom, 24)
 
-            Text("Ready to Sleep?")
+            Text(loc.t("ready_sleep"))
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .padding(.bottom, 12)
 
-            Text("AirAlarm will play soothing sounds\nand wake you at the perfect moment\nin your sleep cycle.")
+            Text(loc.t("ready_subtitle"))
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
@@ -31,7 +32,7 @@ struct WelcomeView: View {
 
             Button(action: onContinue) {
                 HStack(spacing: 10) {
-                    Text("Let's Go")
+                    Text(loc.t("lets_go"))
                         .font(.headline)
                     Image(systemName: "arrow.right")
                         .font(.subheadline.weight(.semibold))

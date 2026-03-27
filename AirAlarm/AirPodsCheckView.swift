@@ -4,6 +4,7 @@ import AVFoundation
 struct AirPodsCheckView: View {
     let onContinue: () -> Void
 
+    @Environment(LocalizationManager.self) private var loc
     @State private var isConnected = false
     @State private var pollTimer: Timer?
 
@@ -29,15 +30,16 @@ struct AirPodsCheckView: View {
                     .symbolEffect(.pulse, isActive: !isConnected)
             }
             .padding(.bottom, 24)
+            .accessibilityLabel(isConnected ? loc.t("airpods_connected") : loc.t("put_airpods"))
 
-            Text(isConnected ? "AirPods Connected" : "Put on Your AirPods")
+            Text(isConnected ? loc.t("airpods_connected") : loc.t("put_airpods"))
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .padding(.bottom, 8)
 
             Text(isConnected
-                 ? "You're all set. Tap Next to continue."
-                 : "We need AirPods to detect when you fall asleep.")
+                 ? loc.t("airpods_subtitle_connected")
+                 : loc.t("airpods_subtitle"))
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
@@ -45,7 +47,7 @@ struct AirPodsCheckView: View {
                 .padding(.bottom, 32)
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("Supported Models")
+                Text(loc.t("supported_models"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.4))
 
@@ -69,7 +71,7 @@ struct AirPodsCheckView: View {
 
             Button(action: onContinue) {
                 HStack(spacing: 10) {
-                    Text(isConnected ? "Next" : "Skip for Now")
+                    Text(isConnected ? loc.t("next") : loc.t("skip"))
                         .font(.headline)
                     Image(systemName: "arrow.right")
                         .font(.subheadline.weight(.semibold))

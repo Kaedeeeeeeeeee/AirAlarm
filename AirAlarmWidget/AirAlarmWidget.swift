@@ -4,10 +4,30 @@ import SwiftUI
 // MARK: - Shared Data Keys
 
 enum WidgetDataKeys {
-    static let suiteName = "group.airalarm"
+    static let suiteName = "group.com.zhangshifeng.airalarm"
     static let lastSleepDuration = "lastSleepDuration"
     static let lastSleepCycles = "lastSleepCycles"
     static let lastSleepDate = "lastSleepDate"
+}
+
+// MARK: - Widget Localization
+
+enum WidgetL10n {
+    private static var lang: String {
+        UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+    }
+
+    private static let strings: [String: [String: String]] = [
+        "cycles": ["en": "cycles", "zh": "个周期", "ja": "サイクル"],
+        "no_data": ["en": "No sleep data yet", "zh": "暂无睡眠数据", "ja": "睡眠データなし"],
+        "slept": ["en": "Slept", "zh": "睡了", "ja": "睡眠"],
+        "sleep_summary": ["en": "Sleep Summary", "zh": "睡眠摘要", "ja": "睡眠サマリー"],
+        "description": ["en": "Shows your last sleep session", "zh": "显示你最近的睡眠记录", "ja": "最新の睡眠セッションを表示"],
+    ]
+
+    static func t(_ key: String) -> String {
+        strings[key]?[lang] ?? strings[key]?["en"] ?? key
+    }
 }
 
 // MARK: - Timeline Entry
@@ -74,7 +94,7 @@ struct SmallWidgetView: View {
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("\(cycles) cycles")
+                Text("\(cycles) \(WidgetL10n.t("cycles"))")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.5))
 
@@ -85,7 +105,7 @@ struct SmallWidgetView: View {
                 }
             } else {
                 Spacer()
-                Text("No sleep data yet")
+                Text(WidgetL10n.t("no_data"))
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.4))
                 Spacer()
@@ -106,7 +126,7 @@ struct LockScreenWidgetView: View {
             HStack(spacing: 6) {
                 Image(systemName: "moon.zzz.fill")
                     .font(.caption)
-                Text("Slept \(duration) · \(cycles) cycles")
+                Text("\(WidgetL10n.t("slept")) \(duration) · \(cycles) \(WidgetL10n.t("cycles"))")
                     .font(.caption)
             }
         } else {
@@ -130,8 +150,8 @@ struct AirAlarmWidget: Widget {
             SmallWidgetView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Sleep Summary")
-        .description("Shows your last sleep session")
+        .configurationDisplayName(WidgetL10n.t("sleep_summary"))
+        .description(WidgetL10n.t("description"))
         .supportedFamilies([.systemSmall, .accessoryRectangular])
     }
 }
