@@ -182,7 +182,7 @@ struct ContentView: View {
     private var playingStatus: some View {
         HStack(spacing: 8) {
             Image(systemName: "waveform").symbolEffect(.pulse)
-            Text("\(loc.t("playing")) \(selectedNoise.rawValue)...")
+            Text("\(loc.t("playing")) \(loc.t(selectedNoise.localizationKey))...")
         }
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.white.opacity(0.6))
@@ -218,7 +218,7 @@ struct ContentView: View {
                     } label: {
                         HStack(spacing: 5) {
                             Image(systemName: noiseIcon(noise)).font(.caption2)
-                            Text(noise.rawValue).font(.caption2.weight(.medium))
+                            Text(loc.t(noise.localizationKey)).font(.caption2.weight(.medium))
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 9)

@@ -13,6 +13,18 @@ enum WhiteNoiseType: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var localizationKey: String {
+        switch self {
+        case .rain: return "sound_rain"
+        case .ocean: return "sound_ocean"
+        case .fire: return "sound_fire"
+        case .forest: return "sound_forest"
+        case .fan: return "sound_fan"
+        case .pureTone: return "sound_whitenoise"
+        case .airplane: return "sound_airplane"
+        }
+    }
+
     var fileName: String {
         switch self {
         case .rain: return "rain"

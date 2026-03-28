@@ -29,20 +29,14 @@ class LocalizationManager {
         let defaults = UserDefaults.standard
         let hasExplicit = defaults.bool(forKey: "hasExplicitLanguageChoice")
 
-        // Migration: existing users who already have a stored language
-        if defaults.object(forKey: "appLanguage") != nil && !hasExplicit {
-            defaults.set(true, forKey: "hasExplicitLanguageChoice")
-            let stored = defaults.string(forKey: "appLanguage") ?? "en"
-            current = Language(rawValue: stored) ?? .english
-            return
-        }
-
         if hasExplicit, let stored = defaults.string(forKey: "appLanguage"),
            let lang = Language(rawValue: stored) {
+            // User explicitly chose a language in Settings — respect it
             current = lang
         } else {
-            // First launch: auto-detect system language
-            let code = Locale.current.language.languageCode?.identifier ?? "en"
+            // Auto-detect system language (first launch or no explicit choice)
+            let preferred = Locale.preferredLanguages.first ?? "en"
+            let code = Locale(identifier: preferred).language.languageCode?.identifier ?? "en"
             let detected = Language(rawValue: code) ?? .english
             current = detected
             defaults.set(detected.rawValue, forKey: "appLanguage")
@@ -106,6 +100,13 @@ class LocalizationManager {
             "notif_wake_body": "You've completed %d sleep cycles (%@). This is your optimal wake time!",
             "notif_bedtime_title": "Time to Wind Down",
             "notif_bedtime_body": "Open AirAlarm to start your sleep session",
+            "sound_rain": "Rain",
+            "sound_ocean": "Ocean",
+            "sound_fire": "Fire",
+            "sound_forest": "Forest",
+            "sound_fan": "Fan",
+            "sound_whitenoise": "White Noise",
+            "sound_airplane": "Airplane",
         ],
         .chinese: [
             "wake_window": "唤醒窗口",
@@ -159,6 +160,13 @@ class LocalizationManager {
             "notif_wake_body": "你已完成 %d 个睡眠周期（%@），现在是最佳起床时间！",
             "notif_bedtime_title": "该休息了",
             "notif_bedtime_body": "打开 AirAlarm 开始你的睡眠",
+            "sound_rain": "雨声",
+            "sound_ocean": "海浪",
+            "sound_fire": "篝火",
+            "sound_forest": "森林",
+            "sound_fan": "风扇",
+            "sound_whitenoise": "白噪音",
+            "sound_airplane": "飞机",
         ],
         .japanese: [
             "wake_window": "起床ウィンドウ",
@@ -212,6 +220,13 @@ class LocalizationManager {
             "notif_wake_body": "%d回の睡眠サイクル（%@）が完了しました。最適な起床タイミングです！",
             "notif_bedtime_title": "そろそろ休みましょう",
             "notif_bedtime_body": "AirAlarmを開いて睡眠セッションを始めましょう",
+            "sound_rain": "雨音",
+            "sound_ocean": "波の音",
+            "sound_fire": "焚き火",
+            "sound_forest": "森林",
+            "sound_fan": "ファン",
+            "sound_whitenoise": "ホワイトノイズ",
+            "sound_airplane": "飛行機",
         ]
     ]
 }
