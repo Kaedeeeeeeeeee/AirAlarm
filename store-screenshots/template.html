@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1284px;
+    height: 2778px;
+    overflow: hidden;
+  }
+  body {
+    font-family: 'PingFang SC', 'SF Pro Display', -apple-system, 'Helvetica Neue', sans-serif;
+    background: linear-gradient(170deg, #1a0a3e 0%, #2d1670 25%, #3b2094 45%, #2a1878 65%, #1a0f52 85%, #0f0830 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    color: white;
+  }
+
+  /* Glow orbs - brighter to add depth */
+  .glow-1 {
+    position: absolute;
+    width: 1100px;
+    height: 1100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, rgba(99,102,241,0.1) 35%, transparent 65%);
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .glow-2 {
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(139,92,246,0.05) 40%, transparent 65%);
+    top: 25%;
+    left: 65%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .glow-3 {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 60%);
+    top: 70%;
+    left: 30%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* Stars */
+  .stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+
+  /* Content */
+  .content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding-top: 140px;
+  }
+
+  .headline {
+    font-size: 82px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    white-space: pre-line;
+    margin-bottom: 24px;
+    text-shadow: 0 2px 40px rgba(0,0,0,0.3);
+  }
+
+  .subtitle {
+    font-size: 36px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+    line-height: 1.4;
+    margin-bottom: 55px;
+    max-width: 1050px;
+    padding: 0 60px;
+  }
+
+  /* Device frame */
+  .device {
+    width: 1060px;
+    border-radius: 56px;
+    border: 6px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 8px 30px rgba(0,0,0,0.4),
+      0 40px 100px rgba(0,0,0,0.6),
+      0 0 80px rgba(139,92,246,0.15);
+    flex-shrink: 0;
+  }
+
+  .device img {
+    width: 100%;
+    display: block;
+  }
+
+  /* Dynamic Island */
+  .dynamic-island {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 40px;
+    background: #000;
+    border-radius: 22px;
+    z-index: 3;
+  }
+
+  /* Bottom fade */
+  .bottom-fade {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: linear-gradient(transparent, rgba(15,8,48,0.9));
+    z-index: 5;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+  <div class="glow-3"></div>
+  <div class="stars" id="stars"></div>
+
+  <div class="content">
+    <h1 class="headline" id="headline"></h1>
+    <p class="subtitle" id="subtitle"></p>
+    <div class="device">
+      <div class="dynamic-island"></div>
+      <img id="screenshot" src="">
+    </div>
+  </div>
+
+  <div class="bottom-fade"></div>
+
+  <script>
+    // Fixed star positions for consistency
+    const starData = [
+      [8,5,3,0.2],[92,3,2,0.15],[15,12,4,0.25],[78,8,2,0.18],[45,2,3,0.12],
+      [3,25,2,0.2],[88,22,3,0.15],[55,15,2,0.22],[22,30,4,0.1],[70,28,2,0.18],
+      [12,42,3,0.14],[85,38,2,0.2],[38,45,3,0.16],[62,40,2,0.12],[95,35,4,0.2],
+      [5,55,2,0.15],[75,52,3,0.18],[30,58,2,0.22],[50,48,4,0.1],[90,46,2,0.16],
+      [18,68,3,0.14],[82,65,2,0.2],[42,70,3,0.12],[65,62,2,0.18],[8,72,4,0.15],
+      [25,82,2,0.2],[72,78,3,0.1],[48,85,2,0.16],[92,80,3,0.14],[15,88,2,0.22],
+      [58,92,3,0.12],[35,95,2,0.18],[80,90,4,0.15],[10,96,2,0.2],[68,94,3,0.1],
+    ];
+
+    const starsEl = document.getElementById('stars');
+    starData.forEach(([x, y, size, opacity]) => {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.cssText = `left:${x}%;top:${y}%;width:${size}px;height:${size}px;opacity:${opacity}`;
+      starsEl.appendChild(s);
+    });
+
+    const slides = {
+      en: [
+        { headline: "Wake at the\nPerfect Moment", subtitle: "Smart alarm powered by 90-minute sleep cycles", img: "assets/screenshot5.png" },
+        { headline: "Sleep Smarter,\nNot Longer", subtitle: "Science-backed sleep cycle tracking", img: "assets/screenshot1.png" },
+        { headline: "AirPods Detect\nWhen You Sleep", subtitle: "Automatic sleep tracking with your AirPods", img: "assets/screenshot2.png" },
+        { headline: "Set Your\nWake Window", subtitle: "Pick your window — we find the perfect moment", img: "assets/screenshot3.png" },
+        { headline: "Drift Off with\nSoothing Sounds", subtitle: "Rain · Ocean · Forest · Fan · White Noise", img: "assets/screenshot4.png" },
+      ],
+      zh: [
+        { headline: "在最佳时刻\n自然醒来", subtitle: "基于90分钟睡眠周期的智能闹钟", img: "assets/screenshot5.png" },
+        { headline: "科学睡眠\n告别昏沉", subtitle: "睡眠周期追踪，精准唤醒", img: "assets/screenshot1.png" },
+        { headline: "AirPods\n智能感知入睡", subtitle: "自动检测入睡，开始计算周期", img: "assets/screenshot2.png" },
+        { headline: "设定唤醒窗口", subtitle: "选择时间范围，在最佳时刻唤醒你", img: "assets/screenshot3.png" },
+        { headline: "沉浸式\n助眠音效", subtitle: "雨声 · 海浪 · 森林 · 风扇 · 白噪音", img: "assets/screenshot4.png" },
+      ]
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get('lang') || 'en';
+    const slide = parseInt(params.get('slide') || '1') - 1;
+    const data = slides[lang][slide];
+
+    document.getElementById('headline').textContent = data.headline;
+    document.getElementById('subtitle').textContent = data.subtitle;
+    document.getElementById('screenshot').src = data.img;
+
+    if (lang === 'zh') {
+      document.documentElement.lang = 'zh-CN';
+    }
+  </script>
+</body>
+</html>

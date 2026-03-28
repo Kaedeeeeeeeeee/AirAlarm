@@ -1,614 +1,598 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>AirAlarm - Wake at the Perfect Moment</title>
     <meta name="description" content="AirAlarm uses your AirPods to detect sleep and wakes you at the optimal point in your sleep cycle. Sleep smarter, not longer.">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Manrope:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#23233c",
+                        "surface-container-lowest": "#000000",
+                        "primary": "#ba9eff",
+                        "secondary-fixed": "#cecdff",
+                        "tertiary": "#b4c1ff",
+                        "on-surface-variant": "#aba9c0",
+                        "on-primary": "#39008c",
+                        "on-primary-fixed": "#000000",
+                        "surface-bright": "#292944",
+                        "surface-container-high": "#1d1d34",
+                        "surface-container-highest": "#23233c",
+                        "on-surface": "#e6e3fc",
+                        "primary-container": "#ae8dff",
+                        "on-secondary": "#3b3b6c",
+                        "on-background": "#e6e3fc",
+                        "outline-variant": "#47465a",
+                        "secondary-container": "#424273",
+                        "secondary": "#c2c1fb",
+                        "background": "#0c0c1d",
+                        "on-secondary-container": "#cdccff",
+                        "surface-container-low": "#111124",
+                        "surface": "#0c0c1d",
+                        "primary-dim": "#8455ef",
+                        "surface-container": "#17172c",
+                        "error": "#ff6e84",
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "Noto Sans SC", "Noto Sans JP", "sans-serif"],
+                        "body": ["Manrope", "Noto Sans SC", "Noto Sans JP", "sans-serif"],
+                        "label": ["Manrope", "Noto Sans SC", "Noto Sans JP", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
     <style>
-        :root {
-            --bg-primary: #0A0A1F;
-            --bg-secondary: #140F38;
-            --purple: #8B7BF7;
-            --purple-glow: rgba(139, 123, 247, 0.3);
-            --text-primary: rgba(255,255,255,1);
-            --text-secondary: rgba(255,255,255,0.6);
-            --text-tertiary: rgba(255,255,255,0.4);
-            --glass-bg: rgba(255,255,255,0.06);
-            --glass-border: rgba(255,255,255,0.1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            overflow-x: hidden;
+            background-color: #0c0c1d;
+            color: #e6e3fc;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(35, 35, 60, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(186, 158, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #ba9eff 0%, #8455ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .button-gradient {
+            background: linear-gradient(135deg, #ba9eff 0%, #8455ef 100%);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .phone-frame {
+            position: relative;
+            width: 280px;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px rgba(132,85,239,0.2);
+            border: 2px solid rgba(255,255,255,0.08);
+        }
+        .phone-frame img {
+            display: block;
+            width: 100%;
+            height: auto;
         }
 
-        /* Breathing glow background */
-        .bg-glow {
-            position: fixed;
-            top: 20%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: breathe 5s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
+        html { scroll-behavior: smooth; }
 
         @keyframes breathe {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.5; }
         }
+        .bg-glow-breathe { animation: breathe 5s ease-in-out infinite; }
 
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-12px); }
         }
+        .animate-float { animation: float 4s ease-in-out infinite; }
 
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .animate-fade-in { animation: fadeInUp 0.8s ease-out both; }
+        .animate-fade-in-delay { animation: fadeInUp 0.8s ease-out 0.2s both; }
 
-        .container {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 0 24px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Navigation */
-        nav {
-            padding: 24px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .logo-icon svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        nav a.nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
-        }
-
-        nav a.nav-link:hover { color: var(--text-primary); }
-
-        /* Hero */
-        .hero {
-            text-align: center;
-            padding: 100px 0 80px;
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .hero-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 100px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            margin-bottom: 28px;
-        }
-
-        .hero h1 {
-            font-family: -apple-system, 'SF Pro Rounded', 'Helvetica Neue', sans-serif;
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 20px;
-            letter-spacing: -0.02em;
-        }
-
-        .hero h1 .accent { color: var(--purple); }
-
-        .hero p {
-            font-size: 1.15rem;
-            color: var(--text-secondary);
-            max-width: 520px;
-            margin: 0 auto 40px;
-            line-height: 1.6;
-        }
-
-        .cta-group {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 32px;
-            background: var(--purple);
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px var(--purple-glow);
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 32px;
-            background: var(--glass-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* App Preview */
-        .app-preview {
-            text-align: center;
-            padding: 40px 0 80px;
-            animation: fadeInUp 1s ease-out 0.2s both;
-        }
-
-        .phone-frame {
-            display: inline-block;
-            width: 280px;
-            height: 560px;
-            background: linear-gradient(170deg, #0E0E2A 0%, #1A0A3E 100%);
-            border-radius: 40px;
-            border: 2px solid rgba(255,255,255,0.08);
-            box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px var(--purple-glow);
-            position: relative;
-            overflow: hidden;
-            animation: float 4s ease-in-out infinite;
-        }
-
-        .phone-content {
-            padding: 60px 24px 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            height: 100%;
-        }
-
-        .clock-ring {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            border: 6px solid rgba(255,255,255,0.06);
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .clock-arc {
-            position: absolute;
-            inset: -6px;
-            border-radius: 50%;
-            border: 6px solid transparent;
-            border-top-color: rgba(255,255,255,0.25);
-            border-right-color: rgba(255,255,255,0.15);
-            animation: rotate-slow 8s linear infinite;
-        }
-
-        @keyframes rotate-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .clock-center {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: rgba(255,255,255,0.9);
-        }
-
-        .clock-label {
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.4);
-            margin-top: 4px;
-        }
-
-        .noise-pills {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .noise-pill {
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.5);
-        }
-
-        .noise-pill.active {
-            background: rgba(139,123,247,0.15);
-            border-color: rgba(139,123,247,0.3);
-            color: var(--purple);
-        }
-
-        /* Features */
-        .features {
-            padding: 80px 0;
-        }
-
-        .section-label {
-            text-align: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--purple);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 12px;
-        }
-
-        .section-title {
-            text-align: center;
-            font-family: -apple-system, 'SF Pro Rounded', 'Helvetica Neue', sans-serif;
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
-            font-weight: 700;
-            margin-bottom: 56px;
-            letter-spacing: -0.01em;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
-        .feature-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 32px 28px;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            transition: transform 0.3s, border-color 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(139,123,247,0.2);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(139,123,247,0.1);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            margin-bottom: 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        /* How it works */
-        .how-it-works {
-            padding: 80px 0;
-        }
-
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 32px;
-            margin-top: 48px;
-        }
-
-        .step {
-            text-align: center;
+        /* Language switcher */
+        .lang-switcher {
             position: relative;
         }
-
-        .step-number {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--purple), #6B5CE7);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 0 auto 20px;
-            box-shadow: 0 4px 20px var(--purple-glow);
-        }
-
-        .step h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .step p {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        .step-connector {
+        .lang-menu {
             display: none;
-        }
-
-        @media (min-width: 768px) {
-            .step-connector {
-                display: block;
-                position: absolute;
-                top: 28px;
-                left: calc(50% + 40px);
-                width: calc(100% - 80px);
-                height: 1px;
-                background: linear-gradient(90deg, rgba(139,123,247,0.3), rgba(139,123,247,0.05));
-            }
-        }
-
-        /* CTA Section */
-        .cta-section {
-            text-align: center;
-            padding: 80px 0;
-        }
-
-        .cta-card {
-            background: linear-gradient(135deg, rgba(139,123,247,0.1), rgba(139,123,247,0.03));
-            border: 1px solid rgba(139,123,247,0.15);
-            border-radius: 28px;
-            padding: 56px 40px;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(35, 35, 60, 0.95);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(186, 158, 255, 0.15);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 120px;
+            z-index: 100;
         }
-
-        .cta-card h2 {
-            font-family: -apple-system, 'SF Pro Rounded', 'Helvetica Neue', sans-serif;
-            font-size: clamp(1.6rem, 4vw, 2.2rem);
-            font-weight: 700;
-            margin-bottom: 16px;
+        .lang-switcher.open .lang-menu { display: block; }
+        .lang-option {
+            display: block;
+            width: 100%;
+            padding: 8px 14px;
+            border: none;
+            background: none;
+            color: #aba9c0;
+            font-size: 0.875rem;
+            font-family: inherit;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-
-        .cta-card p {
-            color: var(--text-secondary);
-            font-size: 1.05rem;
-            margin-bottom: 32px;
-        }
-
-        /* Footer */
-        footer {
-            padding: 40px 0;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        footer p {
-            color: var(--text-tertiary);
-            font-size: 0.85rem;
-        }
-
-        footer a {
-            color: var(--text-tertiary);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s;
-        }
-
-        footer a:hover { color: var(--text-secondary); }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-            .hero { padding: 60px 0 40px; }
-            .phone-frame { width: 240px; height: 480px; }
-            .clock-ring { width: 140px; height: 140px; }
-            .features, .how-it-works, .cta-section { padding: 60px 0; }
-            nav { flex-direction: column; gap: 12px; }
-            footer { flex-direction: column; text-align: center; }
-        }
+        .lang-option:hover { background: rgba(186, 158, 255, 0.1); color: #e6e3fc; }
+        .lang-option.active { color: #ba9eff; font-weight: 600; }
     </style>
 </head>
-<body>
-    <div class="bg-glow"></div>
+<body class="font-body selection:bg-primary/30 selection:text-primary">
 
-    <div class="container">
-        <!-- Navigation -->
-        <nav>
-            <a href="#" class="logo">
-                <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#141432"/><stop offset="100%" stop-color="#1A1A40"/></linearGradient></defs><rect width="1024" height="1024" rx="224" fill="url(#bg)"/><circle cx="300" cy="220" r="80" fill="#2A2A5A"/><circle cx="724" cy="220" r="80" fill="#2A2A5A"/><line x1="340" y1="790" x2="260" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><line x1="684" y1="790" x2="764" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><circle cx="512" cy="512" r="290" fill="none" stroke="#2A2A5A" stroke-width="110"/><line x1="512" y1="512" x2="445" y2="433" stroke="#4A4A7A" stroke-width="52" stroke-linecap="round"/><line x1="512" y1="512" x2="680" y2="512" stroke="#4A4A7A" stroke-width="36" stroke-linecap="round"/><circle cx="512" cy="512" r="30" fill="#4A4A7A"/><path d="M 261 657 A 290 290 0 0 0 512 802" fill="none" stroke="#D0D0E8" stroke-width="114" stroke-linecap="round"/></svg></div>
-                AirAlarm
-            </a>
-            <div style="display:flex; gap:24px;">
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#how" class="nav-link">How It Works</a>
-                <a href="privacy.html" class="nav-link">Privacy</a>
+<!-- Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-[#0c0c1d]/80 backdrop-blur-xl">
+    <div class="flex justify-between items-center px-6 md:px-8 py-4 max-w-7xl mx-auto">
+        <a href="#" class="flex items-center gap-2.5 text-xl font-bold tracking-tighter text-on-background font-headline no-underline">
+            <div class="w-9 h-9 rounded-[10px] overflow-hidden flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="w-full h-full"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#141432"/><stop offset="100%" stop-color="#1A1A40"/></linearGradient></defs><rect width="1024" height="1024" rx="224" fill="url(#bg)"/><circle cx="300" cy="220" r="80" fill="#2A2A5A"/><circle cx="724" cy="220" r="80" fill="#2A2A5A"/><line x1="340" y1="790" x2="260" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><line x1="684" y1="790" x2="764" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><circle cx="512" cy="512" r="290" fill="none" stroke="#2A2A5A" stroke-width="110"/><line x1="512" y1="512" x2="445" y2="433" stroke="#4A4A7A" stroke-width="52" stroke-linecap="round"/><line x1="512" y1="512" x2="680" y2="512" stroke="#4A4A7A" stroke-width="36" stroke-linecap="round"/><circle cx="512" cy="512" r="30" fill="#4A4A7A"/><path d="M 261 657 A 290 290 0 0 0 512 802" fill="none" stroke="#D0D0E8" stroke-width="114" stroke-linecap="round"/></svg>
             </div>
-        </nav>
+            AirAlarm
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+            <a class="font-headline tracking-tight text-sm font-semibold text-on-surface-variant hover:text-on-background transition-colors duration-300" href="#features" data-i18n="nav_features">Features</a>
+            <a class="font-headline tracking-tight text-sm font-semibold text-on-surface-variant hover:text-on-background transition-colors duration-300" href="#how" data-i18n="nav_how">How It Works</a>
+            <a class="font-headline tracking-tight text-sm font-semibold text-on-surface-variant hover:text-on-background transition-colors duration-300" href="privacy.html" data-i18n="nav_privacy">Privacy</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button onclick="document.getElementById('langSwitcher').classList.toggle('open')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-background transition-colors duration-300 text-sm font-label">
+                    <span class="material-symbols-outlined text-lg">language</span>
+                    <span id="currentLangLabel">EN</span>
+                </button>
+                <div class="lang-menu">
+                    <button class="lang-option active" data-lang="en" onclick="setLanguage('en')">English</button>
+                    <button class="lang-option" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+                    <button class="lang-option" data-lang="ja" onclick="setLanguage('ja')">日本語</button>
+                </div>
+            </div>
+            <a href="#download" class="button-gradient px-5 py-2.5 rounded-xl font-headline font-bold text-sm text-on-primary-fixed transition-all duration-300 hover:shadow-[0_0_20px_rgba(132,85,239,0.4)] no-underline" data-i18n="nav_get_started">Get Started</a>
+        </div>
+    </div>
+</nav>
 
-        <!-- Hero -->
-        <section class="hero">
-            <div class="hero-badge">Sleep Cycle Alarm for AirPods</div>
-            <h1>Wake at the<br><span class="accent">Perfect Moment</span></h1>
-            <p>AirAlarm detects when you fall asleep through your AirPods and wakes you at the optimal point in your sleep cycle. No more groggy mornings.</p>
-            <div class="cta-group">
-                <a href="#" class="btn-primary">
+<main class="pt-20 overflow-hidden">
+
+    <!-- Hero Section -->
+    <section class="relative px-6 md:px-8 pt-12 pb-20 md:pt-24 md:pb-32 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-16 animate-fade-in">
+        <div class="flex-1 space-y-7 text-center md:text-left z-10">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-primary font-label text-xs tracking-widest uppercase font-semibold" data-i18n="hero_badge">
+                Sleep Cycle Alarm for AirPods
+            </span>
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold font-headline tracking-tight leading-[1.1] text-on-background" data-i18n="hero_title" data-i18n-html="true">
+                Wake at the <span class="text-gradient">Perfect Moment</span>
+            </h1>
+            <p class="text-on-surface-variant text-lg md:text-xl max-w-xl mx-auto md:mx-0 leading-relaxed" data-i18n="hero_desc">
+                AirAlarm detects when you fall asleep through your AirPods and wakes you at the optimal point in your sleep cycle. No more groggy mornings.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-2">
+                <a href="#" class="button-gradient flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-headline font-bold text-on-primary-fixed shadow-[0_0_20px_rgba(132,85,239,0.3)] hover:shadow-[0_0_30px_rgba(132,85,239,0.5)] transition-all duration-300 no-underline">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Download on App Store
+                    <span data-i18n="cta_download">Download on App Store</span>
                 </a>
-                <a href="#how" class="btn-secondary">Learn More</a>
+                <a href="#how" class="glass-card flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-headline font-bold text-on-surface hover:bg-surface-container-highest transition-all duration-300 no-underline" data-i18n="cta_learn_more">
+                    Learn More
+                </a>
             </div>
-        </section>
+        </div>
+        <div class="flex-1 relative w-full flex justify-center md:justify-end animate-fade-in-delay">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 blur-[100px] rounded-full bg-glow-breathe"></div>
+            <div class="relative z-10 animate-float">
+                <div class="phone-frame">
+                    <img src="images/screenshot5.png" alt="AirAlarm app interface" data-i18n-img="hero_phone"/>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <!-- App Preview -->
-        <section class="app-preview">
-            <div class="phone-frame">
-                <div class="phone-content">
-                    <div class="clock-ring">
-                        <div class="clock-arc"></div>
-                        <div style="text-align:center;">
-                            <div class="clock-center">7:30</div>
-                            <div class="clock-label">Wake Window</div>
+    <!-- Features Bento Grid -->
+    <section id="features" class="px-6 md:px-8 py-20 md:py-24 bg-surface-container-low">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col items-center text-center space-y-4 mb-14">
+                <span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase" data-i18n="features_label">Features</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold font-headline" data-i18n="features_title">Everything You Need for Better Sleep</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="md:col-span-2 glass-card p-8 rounded-3xl group hover:bg-surface-container-high transition-all duration-500 overflow-hidden relative">
+                    <div class="relative z-10 space-y-5 max-w-md">
+                        <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-3xl">bedtime</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-headline" data-i18n="feature1_title">Sleep Cycle Detection</h3>
+                        <p class="text-on-surface-variant leading-relaxed" data-i18n="feature1_desc">Your AirPods detect when you fall asleep. We start tracking your 90-minute sleep cycles automatically for the perfect wake-up.</p>
+                    </div>
+                    <img alt="Sleep cycle visualization" class="absolute top-0 right-0 h-full w-1/2 object-cover object-left opacity-15 group-hover:opacity-30 transition-opacity duration-500 hidden sm:block" src="images/screenshot1.png"/>
+                </div>
+
+                <div class="glass-card p-8 rounded-3xl space-y-5 hover:bg-surface-container-high transition-all duration-500">
+                    <div class="w-12 h-12 rounded-2xl bg-tertiary/20 flex items-center justify-center text-tertiary">
+                        <span class="material-symbols-outlined text-3xl">music_note</span>
+                    </div>
+                    <h3 class="text-2xl font-bold font-headline" data-i18n="feature2_title">White Noise Library</h3>
+                    <p class="text-on-surface-variant leading-relaxed" data-i18n="feature2_desc">Fall asleep to rain, ocean waves, forest sounds, fan noise, or pure white noise. Volume fades as you drift off.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-3xl space-y-5 hover:bg-surface-container-high transition-all duration-500">
+                    <div class="w-12 h-12 rounded-2xl bg-error/20 flex items-center justify-center text-error">
+                        <span class="material-symbols-outlined text-3xl">alarm</span>
+                    </div>
+                    <h3 class="text-2xl font-bold font-headline" data-i18n="feature3_title">Smart Wake Scheduling</h3>
+                    <p class="text-on-surface-variant leading-relaxed" data-i18n="feature3_desc">Set a wake window and we find the perfect moment at the end of a sleep cycle to wake you feeling refreshed.</p>
+                </div>
+
+                <div class="md:col-span-2 glass-card p-8 rounded-3xl group hover:bg-surface-container-high transition-all duration-500 overflow-hidden relative">
+                    <div class="relative z-10 space-y-5 max-w-md">
+                        <div class="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center text-secondary">
+                            <span class="material-symbols-outlined text-3xl">bar_chart</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-headline" data-i18n="feature4_title">Sleep History</h3>
+                        <p class="text-on-surface-variant leading-relaxed" data-i18n="feature4_desc">Track your sleep patterns over time. See how many cycles you complete and how your sleep duration varies night to night.</p>
+                    </div>
+                    <img alt="Ready to sleep screen" class="absolute top-0 right-0 h-full w-1/2 object-cover object-left opacity-10 group-hover:opacity-25 transition-opacity duration-500 hidden sm:block" src="images/screenshot4.png"/>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how" class="px-6 md:px-8 py-20 md:py-24 bg-surface">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
+                <div class="space-y-10">
+                    <div class="space-y-4">
+                        <span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase" data-i18n="how_label">The Journey</span>
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold font-headline" data-i18n="how_title">Three Simple Steps</h2>
+                    </div>
+                    <div class="space-y-10">
+                        <div class="flex gap-5 items-start">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary text-lg">1</div>
+                            <div class="space-y-2">
+                                <h4 class="text-xl font-bold font-headline" data-i18n="step1_title">Put on AirPods & Play</h4>
+                                <p class="text-on-surface-variant leading-relaxed" data-i18n="step1_desc">Choose a soothing sound, set your wake window, and let AirAlarm play as you fall asleep.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5 items-start">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary text-lg">2</div>
+                            <div class="space-y-2">
+                                <h4 class="text-xl font-bold font-headline" data-i18n="step2_title">Sleep Naturally</h4>
+                                <p class="text-on-surface-variant leading-relaxed" data-i18n="step2_desc">When your AirPods detect you've fallen asleep, we begin counting your 90-minute sleep cycles.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5 items-start">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary text-lg">3</div>
+                            <div class="space-y-2">
+                                <h4 class="text-xl font-bold font-headline" data-i18n="step3_title">Wake Refreshed</h4>
+                                <p class="text-on-surface-variant leading-relaxed" data-i18n="step3_desc">A gentle alarm wakes you at the end of a sleep cycle within your window, so you feel energized.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="noise-pills">
-                        <span class="noise-pill active">Rain</span>
-                        <span class="noise-pill">Ocean</span>
-                        <span class="noise-pill">Forest</span>
-                        <span class="noise-pill">Fan</span>
-                    </div>
-                    <div style="margin-top:auto; padding:16px; width:100%; background:rgba(255,255,255,0.04); border-radius:16px; text-align:center;">
-                        <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-bottom:4px;">Earliest wake</div>
-                        <div style="font-size:1.1rem; font-weight:600;">6:00 - 7:30 AM</div>
-                    </div>
+                </div>
+                <div class="relative flex justify-center">
+                    <div class="absolute inset-0 bg-primary/15 blur-[120px] rounded-full"></div>
+                    <img alt="AirAlarm app" class="relative z-10 rounded-[2.5rem] w-full max-w-sm object-cover shadow-[0_40px_60px_rgba(0,0,0,0.4)]" src="images/01-perfect-moment.png" data-i18n-img="how_screenshot"/>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Features -->
-        <section class="features" id="features">
-            <div class="section-label">Features</div>
-            <h2 class="section-title">Everything You Need for Better Sleep</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                    <h3>Sleep Cycle Detection</h3>
-                    <p>Your AirPods detect when you fall asleep. We start tracking your 90-minute sleep cycles automatically.</p>
+    <!-- App Screenshots Showcase -->
+    <section class="px-6 md:px-8 py-20 md:py-24 bg-surface-container-low overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col items-center text-center space-y-4 mb-14">
+                <span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase" data-i18n="showcase_label">Experience</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold font-headline" data-i18n="showcase_title">Designed for Deep Rest</h2>
+            </div>
+            <div class="flex gap-5 overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory">
+                <div class="flex-shrink-0 w-64 md:w-72 snap-center">
+                    <img src="images/01-perfect-moment.png" alt="Wake at the Perfect Moment" class="w-full rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.3)]" data-i18n-img="ss_01"/>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-                    <h3>White Noise Library</h3>
-                    <p>Fall asleep to rain, ocean waves, forest sounds, fan noise, or pure white noise. Volume fades as you drift off.</p>
+                <div class="flex-shrink-0 w-64 md:w-72 snap-center">
+                    <img src="images/02-sleep-smarter.png" alt="Sleep Smarter" class="w-full rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.3)]" data-i18n-img="ss_02"/>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
-                    <h3>Smart Wake Scheduling</h3>
-                    <p>Set a wake window and we'll find the perfect moment at the end of a sleep cycle to wake you feeling refreshed.</p>
+                <div class="flex-shrink-0 w-64 md:w-72 snap-center">
+                    <img src="images/03-airpods-detect.png" alt="AirPods Detection" class="w-full rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.3)]" data-i18n-img="ss_03"/>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-                    <h3>Sleep History</h3>
-                    <p>Track your sleep patterns over time. See how many cycles you complete and how your sleep duration varies.</p>
+                <div class="flex-shrink-0 w-64 md:w-72 snap-center">
+                    <img src="images/04-wake-window.png" alt="Wake Window" class="w-full rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.3)]" data-i18n-img="ss_04"/>
+                </div>
+                <div class="flex-shrink-0 w-64 md:w-72 snap-center">
+                    <img src="images/05-sleep-sounds.png" alt="Sleep Sounds" class="w-full rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.3)]" data-i18n-img="ss_05"/>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- How It Works -->
-        <section class="how-it-works" id="how">
-            <div class="section-label">How It Works</div>
-            <h2 class="section-title">Three Simple Steps</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Put on AirPods & Play</h3>
-                    <p>Choose a soothing sound, set your wake window, and let AirAlarm play as you fall asleep.</p>
-                    <div class="step-connector"></div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Sleep Naturally</h3>
-                    <p>When your AirPods detect you've fallen asleep, we begin counting your sleep cycles.</p>
-                    <div class="step-connector"></div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Wake Refreshed</h3>
-                    <p>A gentle alarm wakes you at the end of a sleep cycle within your window, so you feel energized.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA -->
-        <section class="cta-section">
-            <div class="cta-card">
-                <h2>Start Sleeping Smarter Tonight</h2>
-                <p>Join thousands who wake up feeling refreshed every morning.</p>
-                <a href="#" class="btn-primary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Download on App Store
+    <!-- Final CTA -->
+    <section id="download" class="px-6 md:px-8 py-20 md:py-24 relative overflow-hidden">
+        <div class="max-w-4xl mx-auto text-center relative z-10 glass-card p-10 md:p-20 rounded-[2.5rem]">
+            <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold font-headline mb-6" data-i18n="cta_title" data-i18n-html="true">Start Sleeping <span class="text-gradient">Smarter</span> Tonight</h2>
+            <p class="text-on-surface-variant text-lg md:text-xl mb-10 max-w-2xl mx-auto" data-i18n="cta_desc">Join thousands who wake up feeling refreshed every morning with AirAlarm.</p>
+            <div class="flex flex-col sm:flex-row gap-5 justify-center">
+                <a href="#" class="button-gradient flex items-center justify-center gap-3 px-10 py-5 rounded-2xl font-headline font-bold text-lg text-on-primary-fixed shadow-[0_0_40px_rgba(132,85,239,0.4)] hover:shadow-[0_0_60px_rgba(132,85,239,0.6)] transition-all duration-300 no-underline">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    <span data-i18n="cta_download">Download on App Store</span>
                 </a>
             </div>
-        </section>
+            <p class="mt-6 text-sm text-on-surface-variant/50 font-label" data-i18n="cta_note">Free to download. Available on iOS.</p>
+        </div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full -z-10 opacity-30 pointer-events-none">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-primary/40 blur-[150px] rounded-full"></div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-tertiary/20 blur-[150px] rounded-full"></div>
+        </div>
+    </section>
 
-        <!-- Footer -->
-        <footer>
-            <p>&copy; 2026 AirAlarm. All rights reserved.</p>
-            <div class="footer-links">
-                <a href="privacy.html">Privacy Policy</a>
-                <a href="mailto:f.shera.09@gmail.com">Contact</a>
-            </div>
-        </footer>
+</main>
+
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full py-10 px-6 md:px-8">
+    <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto gap-5">
+        <div class="text-lg font-bold text-on-background font-headline">AirAlarm</div>
+        <div class="flex gap-6 md:gap-8 flex-wrap justify-center">
+            <a class="font-label text-xs tracking-wide uppercase text-on-surface-variant hover:text-on-background transition-colors duration-300" href="privacy.html" data-i18n="footer_privacy">Privacy Policy</a>
+            <a class="font-label text-xs tracking-wide uppercase text-on-surface-variant hover:text-on-background transition-colors duration-300" href="mailto:f.shera.09@gmail.com" data-i18n="footer_contact">Contact</a>
+        </div>
+        <p class="font-label text-xs tracking-wide text-on-surface-variant/60" data-i18n="footer_copy">&copy; 2026 AirAlarm. All rights reserved.</p>
     </div>
+</footer>
+
+<script>
+// ── i18n Translation Data ──
+const i18n = {
+    en: {
+        nav_features: "Features",
+        nav_how: "How It Works",
+        nav_privacy: "Privacy",
+        nav_get_started: "Get Started",
+        hero_badge: "Sleep Cycle Alarm for AirPods",
+        hero_title: 'Wake at the <span class="text-gradient">Perfect Moment</span>',
+        hero_desc: "AirAlarm detects when you fall asleep through your AirPods and wakes you at the optimal point in your sleep cycle. No more groggy mornings.",
+        cta_download: "Download on App Store",
+        cta_learn_more: "Learn More",
+        features_label: "Features",
+        features_title: "Everything You Need for Better Sleep",
+        feature1_title: "Sleep Cycle Detection",
+        feature1_desc: "Your AirPods detect when you fall asleep. We start tracking your 90-minute sleep cycles automatically for the perfect wake-up.",
+        feature2_title: "White Noise Library",
+        feature2_desc: "Fall asleep to rain, ocean waves, forest sounds, fan noise, or pure white noise. Volume fades as you drift off.",
+        feature3_title: "Smart Wake Scheduling",
+        feature3_desc: "Set a wake window and we find the perfect moment at the end of a sleep cycle to wake you feeling refreshed.",
+        feature4_title: "Sleep History",
+        feature4_desc: "Track your sleep patterns over time. See how many cycles you complete and how your sleep duration varies night to night.",
+        how_label: "The Journey",
+        how_title: "Three Simple Steps",
+        step1_title: "Put on AirPods & Play",
+        step1_desc: "Choose a soothing sound, set your wake window, and let AirAlarm play as you fall asleep.",
+        step2_title: "Sleep Naturally",
+        step2_desc: "When your AirPods detect you've fallen asleep, we begin counting your 90-minute sleep cycles.",
+        step3_title: "Wake Refreshed",
+        step3_desc: "A gentle alarm wakes you at the end of a sleep cycle within your window, so you feel energized.",
+        showcase_label: "Experience",
+        showcase_title: "Designed for Deep Rest",
+        cta_title: 'Start Sleeping <span class="text-gradient">Smarter</span> Tonight',
+        cta_desc: "Join thousands who wake up feeling refreshed every morning with AirAlarm.",
+        cta_note: "Free to download. Available on iOS.",
+        footer_privacy: "Privacy Policy",
+        footer_contact: "Contact",
+        footer_copy: "\u00a9 2026 AirAlarm. All rights reserved.",
+    },
+    zh: {
+        nav_features: "功能",
+        nav_how: "使用方法",
+        nav_privacy: "隐私政策",
+        nav_get_started: "立即开始",
+        hero_badge: "AirPods 睡眠周期闹钟",
+        hero_title: '在<span class="text-gradient">最佳时刻</span>自然醒来',
+        hero_desc: "AirAlarm 通过 AirPods 感知你何时入睡，并在睡眠周期的最佳时刻唤醒你。告别昏沉的早晨。",
+        cta_download: "在 App Store 下载",
+        cta_learn_more: "了解更多",
+        features_label: "核心功能",
+        features_title: "更好睡眠所需的一切",
+        feature1_title: "睡眠周期检测",
+        feature1_desc: "AirPods 自动检测你的入睡时间，我们开始追踪你的 90 分钟睡眠周期，确保在最佳时刻唤醒你。",
+        feature2_title: "白噪音库",
+        feature2_desc: "在雨声、海浪、森林声、风扇声或纯白噪音中入睡。音量会随着你进入梦乡逐渐降低。",
+        feature3_title: "智能唤醒时间",
+        feature3_desc: "设置一个唤醒窗口，我们会在睡眠周期结束时找到最佳时刻唤醒你，让你精力充沛。",
+        feature4_title: "睡眠记录",
+        feature4_desc: "追踪你的睡眠模式。查看你完成了多少个睡眠周期，以及每晚的睡眠时长变化。",
+        how_label: "使用步骤",
+        how_title: "三个简单步骤",
+        step1_title: "戴上 AirPods，开始播放",
+        step1_desc: "选择一个舒缓的声音，设置唤醒窗口，让 AirAlarm 在你入睡时播放。",
+        step2_title: "自然入睡",
+        step2_desc: "当 AirPods 检测到你已经入睡，我们开始计算你的 90 分钟睡眠周期。",
+        step3_title: "精力充沛地醒来",
+        step3_desc: "一个轻柔的闹钟会在你的唤醒窗口内，在睡眠周期结束时唤醒你。",
+        showcase_label: "体验",
+        showcase_title: "为深度睡眠而设计",
+        cta_title: '今晚开始<span class="text-gradient">聪明地</span>睡觉',
+        cta_desc: "加入数千名每天早上精力充沛醒来的用户。",
+        cta_note: "免费下载，iOS 版本可用。",
+        footer_privacy: "隐私政策",
+        footer_contact: "联系我们",
+        footer_copy: "\u00a9 2026 AirAlarm. 保留所有权利。",
+    },
+    ja: {
+        nav_features: "機能",
+        nav_how: "使い方",
+        nav_privacy: "プライバシー",
+        nav_get_started: "始めましょう",
+        hero_badge: "AirPods 対応スリープサイクルアラーム",
+        hero_title: '<span class="text-gradient">最適なタイミング</span>で目覚める',
+        hero_desc: "AirAlarm は AirPods を通じて入眠を検知し、睡眠サイクルの最適なポイントで起こします。もう寝起きのだるさとはお別れです。",
+        cta_download: "App Store でダウンロード",
+        cta_learn_more: "詳しく見る",
+        features_label: "機能紹介",
+        features_title: "より良い睡眠に必要なすべて",
+        feature1_title: "睡眠サイクル検出",
+        feature1_desc: "AirPods があなたの入眠を自動検知。90分の睡眠サイクルを追跡し、最適な起床タイミングを見つけます。",
+        feature2_title: "ホワイトノイズライブラリ",
+        feature2_desc: "雨音、波の音、森の音、ファンの音、ホワイトノイズで眠りにつきましょう。眠りにつくと音量が自動で下がります。",
+        feature3_title: "スマート起床スケジュール",
+        feature3_desc: "起床ウィンドウを設定すると、睡眠サイクルの終わりに最適なタイミングでスッキリ目覚められます。",
+        feature4_title: "睡眠履歴",
+        feature4_desc: "睡眠パターンを時系列で追跡。完了したサイクル数や、日ごとの睡眠時間の変化を確認できます。",
+        how_label: "ステップ",
+        how_title: "3つの簡単なステップ",
+        step1_title: "AirPods を装着して再生",
+        step1_desc: "心地よいサウンドを選び、起床ウィンドウを設定して、AirAlarm を再生しながら眠りにつきましょう。",
+        step2_title: "自然に眠る",
+        step2_desc: "AirPods が入眠を検知すると、90分の睡眠サイクルのカウントを開始します。",
+        step3_title: "スッキリ目覚める",
+        step3_desc: "起床ウィンドウ内で睡眠サイクルの終わりに、優しいアラームが起こしてくれます。",
+        showcase_label: "体験",
+        showcase_title: "深い眠りのためにデザイン",
+        cta_title: '今夜から<span class="text-gradient">賢く</span>眠ろう',
+        cta_desc: "毎朝スッキリ目覚める数千人のユーザーに加わりましょう。",
+        cta_note: "無料ダウンロード。iOS で利用可能。",
+        footer_privacy: "プライバシーポリシー",
+        footer_contact: "お問い合わせ",
+        footer_copy: "\u00a9 2026 AirAlarm. All rights reserved.",
+    }
+};
+
+// ── Image paths per locale (zh has localized screenshots, ja falls back to en) ──
+const imgPaths = {
+    en: {
+        hero_phone: "images/screenshot5.png",
+        how_screenshot: "images/01-perfect-moment.png",
+        ss_01: "images/01-perfect-moment.png",
+        ss_02: "images/02-sleep-smarter.png",
+        ss_03: "images/03-airpods-detect.png",
+        ss_04: "images/04-wake-window.png",
+        ss_05: "images/05-sleep-sounds.png",
+    },
+    zh: {
+        hero_phone: "images/screenshot5.png",
+        how_screenshot: "images/zh/01-perfect-moment.png",
+        ss_01: "images/zh/01-perfect-moment.png",
+        ss_02: "images/zh/02-sleep-smarter.png",
+        ss_03: "images/zh/03-airpods-detect.png",
+        ss_04: "images/zh/04-wake-window.png",
+        ss_05: "images/zh/05-sleep-sounds.png",
+    },
+    ja: {
+        hero_phone: "images/screenshot5.png",
+        how_screenshot: "images/01-perfect-moment.png",
+        ss_01: "images/01-perfect-moment.png",
+        ss_02: "images/02-sleep-smarter.png",
+        ss_03: "images/03-airpods-detect.png",
+        ss_04: "images/04-wake-window.png",
+        ss_05: "images/05-sleep-sounds.png",
+    }
+};
+
+const langLabels = { en: "EN", zh: "中文", ja: "JA" };
+
+function detectLanguage() {
+    var stored = localStorage.getItem("airAlarmLang");
+    if (stored && i18n[stored]) return stored;
+    var nav = (navigator.language || "").toLowerCase();
+    if (nav.startsWith("zh")) return "zh";
+    if (nav.startsWith("ja")) return "ja";
+    return "en";
+}
+
+function setLanguage(lang) {
+    if (!i18n[lang]) return;
+    localStorage.setItem("airAlarmLang", lang);
+    document.documentElement.lang = lang;
+
+    // Update text
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n");
+        var val = i18n[lang][key];
+        if (!val) return;
+        if (el.getAttribute("data-i18n-html") === "true") {
+            el.innerHTML = val;
+        } else {
+            el.textContent = val;
+        }
+    });
+
+    // Update images
+    var paths = imgPaths[lang] || imgPaths.en;
+    document.querySelectorAll("[data-i18n-img]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n-img");
+        if (paths[key]) el.src = paths[key];
+    });
+
+    // Update page title & meta
+    var titles = {
+        en: "AirAlarm - Wake at the Perfect Moment",
+        zh: "AirAlarm - 在最佳时刻自然醒来",
+        ja: "AirAlarm - 最適なタイミングで目覚める"
+    };
+    var descs = {
+        en: "AirAlarm uses your AirPods to detect sleep and wakes you at the optimal point in your sleep cycle.",
+        zh: "AirAlarm 通过 AirPods 感知入睡，在睡眠周期的最佳时刻唤醒你。",
+        ja: "AirAlarm は AirPods で入眠を検知し、睡眠サイクルの最適なタイミングで起こします。"
+    };
+    document.title = titles[lang] || titles.en;
+    var metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.content = descs[lang] || descs.en;
+
+    // Update switcher UI
+    document.getElementById("currentLangLabel").textContent = langLabels[lang];
+    document.querySelectorAll(".lang-option").forEach(function(btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-lang") === lang);
+    });
+
+    // Close menu
+    document.getElementById("langSwitcher").classList.remove("open");
+}
+
+// Close language menu when clicking outside
+document.addEventListener("click", function(e) {
+    var switcher = document.getElementById("langSwitcher");
+    if (!switcher.contains(e.target)) {
+        switcher.classList.remove("open");
+    }
+});
+
+// Initialize on load
+setLanguage(detectLanguage());
+</script>
+
 </body>
 </html>

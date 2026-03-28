@@ -10,7 +10,7 @@
 				<string>airalarm</string>
 			</array>
 			<key>CFBundleURLName</key>
-			<string>com.zhangshifeng.AirAlarm</string>
+			<string>com.zhangshifeng.air-alarm</string>
 		</dict>
 	</array>
 	<key>UIBackgroundModes</key>

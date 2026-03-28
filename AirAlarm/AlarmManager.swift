@@ -1,13 +1,18 @@
 import UserNotifications
 import AVFoundation
+import os
 
 @Observable
 class AlarmManager {
+    private static let logger = Logger(subsystem: "com.zhangshifeng.airalarm", category: "Alarm")
+
     var isAlarmScheduled = false
     var scheduledWakeTime: Date?
     var scheduledCycles: Int = 0
     var isRinging = false
     var snoozeCount: Int = 0
+
+    var localization: LocalizationManager?
 
     private var alarmPlayer: AVAudioPlayer?
     private var alarmTimer: Timer?
@@ -16,9 +21,11 @@ class AlarmManager {
     func requestPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
         do {
-            return try await center.requestAuthorization(options: [.alert, .sound, .criticalAlert])
+            let granted = try await center.requestAuthorization(options: [.alert, .sound, .criticalAlert])
+            if granted { return true }
+            return try await center.requestAuthorization(options: [.alert, .sound])
         } catch {
-            print("Notification permission error: \(error)")
+            Self.logger.error("Notification permission error: \(error)")
             return false
         }
     }
@@ -28,8 +35,11 @@ class AlarmManager {
         center.removeAllPendingNotificationRequests()
 
         let content = UNMutableNotificationContent()
-        content.title = "Time to Wake Up"
-        content.body = "You've completed \(cycles) sleep cycles (\(SleepCycleCalculator.formatDuration(cycles: cycles))). This is your optimal wake time!"
+        let loc = localization
+        content.title = loc?.t("notif_wake_title") ?? "Time to Wake Up"
+        let duration = SleepCycleCalculator.formatDuration(cycles: cycles)
+        let bodyTemplate = loc?.t("notif_wake_body") ?? "You've completed %d sleep cycles (%@). This is your optimal wake time!"
+        content.body = String(format: bodyTemplate, cycles, duration)
         content.sound = UNNotificationSound.defaultCritical
         content.interruptionLevel = .timeSensitive
 
@@ -39,6 +49,17 @@ class AlarmManager {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
         let request = UNNotificationRequest(identifier: "air-alarm-wake", content: content, trigger: trigger)
         center.add(request)
+
+        // Fallback notification (no criticalAlert entitlement needed)
+        let fallbackContent = UNMutableNotificationContent()
+        fallbackContent.title = content.title
+        fallbackContent.body = content.body
+        fallbackContent.sound = .default
+        fallbackContent.interruptionLevel = .timeSensitive
+
+        let fallbackTrigger = UNTimeIntervalNotificationTrigger(timeInterval: interval + 2, repeats: false)
+        let fallbackRequest = UNNotificationRequest(identifier: "air-alarm-wake-fallback", content: fallbackContent, trigger: fallbackTrigger)
+        center.add(fallbackRequest)
 
         alarmTimer?.invalidate()
         alarmTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
@@ -81,7 +102,7 @@ class AlarmManager {
             try session.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
             try session.setActive(true)
         } catch {
-            print("Failed to configure alarm audio session: \(error)")
+            Self.logger.error("Failed to configure alarm audio session: \(error)")
         }
 
         guard let url = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else { return }
@@ -96,7 +117,7 @@ class AlarmManager {
             self.isRinging = true
             startVolumeRamp()
         } catch {
-            print("Failed to play alarm: \(error)")
+            Self.logger.error("Failed to play alarm: \(error)")
         }
     }
 

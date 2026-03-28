@@ -49,21 +49,9 @@ struct ContentView: View {
                     }
                     .glassEffect(.clear, in: .circle)
                     .accessibilityLabel(loc.t("settings"))
+                    .accessibilityIdentifier("settingsButton")
 
                     Spacer()
-
-                    #if DEBUG
-                    Button {
-                        alarmManager.scheduleAlarm(at: Date().addingTimeInterval(2), cycles: 4)
-                        withAnimation(.spring(duration: 0.4)) { appState = .alarmSet }
-                    } label: {
-                        Image(systemName: "bell.badge")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.4))
-                            .padding(10)
-                    }
-                    .glassEffect(.clear, in: .circle)
-                    #endif
                 }
                 .padding(.horizontal, 8)
                 .padding(.top, 4)
@@ -103,6 +91,7 @@ struct ContentView: View {
                     }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white.opacity(0.6))
+                    .accessibilityIdentifier("sleepDetectionIndicator")
                     .transition(.scale.combined(with: .opacity))
                     .padding(.top, 16)
                 }
@@ -180,6 +169,7 @@ struct ContentView: View {
             ), in: 0...1)
             .tint(.white.opacity(0.5))
             .accessibilityLabel(loc.t("volume"))
+            .accessibilityIdentifier("volumeSlider")
             Image(systemName: "speaker.wave.3.fill")
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.35))
@@ -196,6 +186,7 @@ struct ContentView: View {
         }
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.white.opacity(0.6))
+        .accessibilityIdentifier("playingStatus")
     }
 
     // MARK: - Alarm Info Pill
@@ -236,6 +227,7 @@ struct ContentView: View {
                     .glassEffect(selectedNoise == noise ? .regular : .clear, in: .capsule)
                     .accessibilityLabel(noise.rawValue)
                     .accessibilityAddTraits(selectedNoise == noise ? .isSelected : [])
+                    .accessibilityIdentifier("noise_\(noise.rawValue)")
                 }
             }
             .padding(.horizontal, 16)
@@ -251,6 +243,8 @@ struct ContentView: View {
         case .forest:    Color(red: 0.03, green: 0.14, blue: 0.08)
         case .fan:       Color(red: 0.07, green: 0.07, blue: 0.10)
         case .pureTone:  Color(red: 0.10, green: 0.05, blue: 0.22)
+        case .airplane:  Color(red: 0.06, green: 0.07, blue: 0.18)
+        case .fire:      Color(red: 0.22, green: 0.06, blue: 0.02)
         }
         return color.opacity(0.6)
     }
@@ -264,6 +258,8 @@ struct ContentView: View {
         case .forest: return "leaf"
         case .fan: return "fan"
         case .pureTone: return "waveform.path"
+        case .airplane: return "airplane"
+        case .fire: return "flame"
         }
     }
 

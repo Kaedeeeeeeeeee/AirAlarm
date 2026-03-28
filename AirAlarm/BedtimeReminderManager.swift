@@ -4,13 +4,13 @@ import Foundation
 enum BedtimeReminderManager {
     private static let identifier = "air-alarm-bedtime-reminder"
 
-    static func schedule(hour: Int, minute: Int) {
+    static func schedule(hour: Int, minute: Int, localization: LocalizationManager? = nil) {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
 
         let content = UNMutableNotificationContent()
-        content.title = "Time to Wind Down"
-        content.body = "Open AirAlarm to start your sleep session"
+        content.title = localization?.t("notif_bedtime_title") ?? "Time to Wind Down"
+        content.body = localization?.t("notif_bedtime_body") ?? "Open AirAlarm to start your sleep session"
         content.sound = .default
         content.interruptionLevel = .active
 

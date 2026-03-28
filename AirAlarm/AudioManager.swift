@@ -1,12 +1,15 @@
 import AVFoundation
 import Combine
+import os
 
 enum WhiteNoiseType: String, CaseIterable, Identifiable {
     case rain = "Rain"
     case ocean = "Ocean"
+    case fire = "Fire"
     case forest = "Forest"
     case fan = "Fan"
     case pureTone = "White Noise"
+    case airplane = "Airplane"
 
     var id: String { rawValue }
 
@@ -17,12 +20,16 @@ enum WhiteNoiseType: String, CaseIterable, Identifiable {
         case .forest: return "forest"
         case .fan: return "fan"
         case .pureTone: return "whitenoise"
+        case .airplane: return "airplane"
+        case .fire: return "fire"
         }
     }
 }
 
 @Observable
 class AudioManager {
+    private static let logger = Logger(subsystem: "com.zhangshifeng.airalarm", category: "Audio")
+
     var isPlaying = false
     var sleepDetected = false
     var sleepTime: Date?
@@ -89,7 +96,7 @@ class AudioManager {
             player.play()
             self.audioPlayer = player
         } catch {
-            print("Failed to play audio file: \(error)")
+            Self.logger.error("Failed to play audio file: \(error)")
         }
     }
 
@@ -101,7 +108,7 @@ class AudioManager {
             try session.setCategory(.playback, mode: .default, options: [])
             try session.setActive(true)
         } catch {
-            print("Failed to configure audio session: \(error)")
+            Self.logger.error("Failed to configure audio session: \(error)")
         }
 
         NotificationCenter.default.addObserver(
@@ -171,7 +178,7 @@ class AudioManager {
             self.audioEngine = engine
             self.playerNode = player
         } catch {
-            print("Failed to start audio engine: \(error)")
+            Self.logger.error("Failed to start audio engine: \(error)")
         }
     }
 
@@ -213,6 +220,22 @@ class AudioManager {
                 value += Float.random(in: -0.05...0.05)
                 value = max(-0.5, min(0.5, value))
                 data[i] = value * 0.5
+            }
+        case .airplane:
+            var prev: Float = 0
+            for i in 0..<Int(frameCount) {
+                let noise = Float.random(in: -0.25...0.25)
+                prev = prev * 0.9 + noise * 0.1
+                let hum = sin(Float(i) / Float(sampleRate) * 120 * .pi) * 0.05
+                data[i] = prev + hum
+            }
+        case .fire:
+            var prev: Float = 0
+            for i in 0..<Int(frameCount) {
+                let noise = Float.random(in: -0.3...0.3)
+                prev = prev * 0.6 + noise * 0.4
+                let crackle: Float = Float.random(in: 0...1) > 0.99 ? Float.random(in: -0.5...0.5) : 0
+                data[i] = prev * 0.7 + crackle * 0.3
             }
         }
         return buffer

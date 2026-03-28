@@ -37,6 +37,7 @@ struct OnboardingView: View {
                         .padding(.vertical, 16)
                 }
                 .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                .accessibilityIdentifier(currentPage < 2 ? "onboardingNext" : "onboardingGetStarted")
                 .padding(.horizontal, 32)
                 .padding(.bottom, 40)
             }
@@ -92,6 +93,7 @@ private struct SleepCyclePage: View {
                 }
             }
             .frame(width: 300, height: 130)
+            .drawingGroup() // Metal-accelerated rendering for smoother animation
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.5)) {
                     waveProgress = 1.0
@@ -132,14 +134,27 @@ private struct SleepWavePath: Shape {
         let midY = h * 0.5
         let amplitude = h * 0.35
 
+        // Use cubic Bézier curves to approximate sine wave (8 segments vs 300 line segments)
+        // This dramatically improves trim animation performance
+        let cycles = 4
+        let halfPeriod = w / CGFloat(cycles * 2)
+        let k: CGFloat = 0.3634 // optimal control point factor for sine approximation
+
         path.move(to: CGPoint(x: 0, y: midY))
 
-        // 4 complete sine wave cycles
+        // 4 cycles × 2 half-cycles = 8 Bézier curves
         // Positive sin = DOWN (deep sleep), negative sin = UP (light sleep / peak = best wake)
-        for x in stride(from: 0, through: w, by: 1) {
-            let progress = x / w
-            let y = midY + amplitude * sin(progress * 4 * 2 * .pi)
-            path.addLine(to: CGPoint(x: x, y: y))
+        for i in 0..<(cycles * 2) {
+            let startX = CGFloat(i) * halfPeriod
+            let endX = startX + halfPeriod
+            let isDown = (i % 2 == 0)
+            let peakY = isDown ? (midY + amplitude) : (midY - amplitude)
+
+            path.addCurve(
+                to: CGPoint(x: endX, y: midY),
+                control1: CGPoint(x: startX + halfPeriod * k, y: peakY),
+                control2: CGPoint(x: endX - halfPeriod * k, y: peakY)
+            )
         }
 
         return path

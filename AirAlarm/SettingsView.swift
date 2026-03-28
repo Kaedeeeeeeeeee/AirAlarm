@@ -20,9 +20,10 @@ struct SettingsView: View {
                 // Bedtime Reminder
                 Section {
                     Toggle(loc.t("bedtime_reminder"), isOn: $reminderEnabled)
+                        .accessibilityIdentifier("bedtimeToggle")
                         .onChange(of: reminderEnabled) { _, enabled in
                             if enabled {
-                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute)
+                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute, localization: loc)
                             } else {
                                 BedtimeReminderManager.cancel()
                             }
@@ -34,7 +35,7 @@ struct SettingsView: View {
                                 let cal = Calendar.current
                                 reminderHour = cal.component(.hour, from: newTime)
                                 reminderMinute = cal.component(.minute, from: newTime)
-                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute)
+                                BedtimeReminderManager.schedule(hour: reminderHour, minute: reminderMinute, localization: loc)
                             }
                     }
                 } header: {
@@ -59,6 +60,7 @@ struct SettingsView: View {
                     NavigationLink(loc.t("history")) {
                         HistoryView()
                     }
+                    .accessibilityIdentifier("historyLink")
                 }
                 .listRowBackground(Color.white.opacity(0.05))
 
@@ -86,6 +88,7 @@ struct SettingsView: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.white.opacity(0.4))
                     }
+                    .accessibilityIdentifier("settingsClose")
                 }
             }
         }

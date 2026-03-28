@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AirAlarm | Celestial Sleep Technology</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#23233c",
+              "surface-container-lowest": "#000000",
+              "primary": "#ba9eff",
+              "secondary-fixed": "#cecdff",
+              "tertiary-dim": "#96a5ec",
+              "on-tertiary-fixed-variant": "#293978",
+              "on-secondary-fixed": "#2f2f5f",
+              "on-tertiary-container": "#1f2f6f",
+              "on-tertiary": "#2a3a79",
+              "on-error": "#490013",
+              "surface-dim": "#0c0c1d",
+              "outline": "#747389",
+              "error-dim": "#d73357",
+              "on-surface-variant": "#aba9c0",
+              "on-primary-fixed-variant": "#370086",
+              "on-primary": "#39008c",
+              "inverse-primary": "#6e3bd7",
+              "tertiary-fixed-dim": "#96a5ec",
+              "surface-bright": "#292944",
+              "surface-container-high": "#1d1d34",
+              "surface-container-highest": "#23233c",
+              "on-surface": "#e6e3fc",
+              "primary-fixed-dim": "#a27cff",
+              "primary-container": "#ae8dff",
+              "on-secondary": "#3b3b6c",
+              "secondary-fixed-dim": "#bfbef8",
+              "on-primary-container": "#2b006e",
+              "background": "#0c0c1d",
+              "on-secondary-container": "#cdccff",
+              "outline-variant": "#47465a",
+              "secondary-container": "#424273",
+              "on-primary-fixed": "#000000",
+              "inverse-on-surface": "#545367",
+              "secondary-dim": "#b4b4ed",
+              "on-tertiary-fixed": "#021657",
+              "on-error-container": "#ffb2b9",
+              "tertiary": "#b4c1ff",
+              "on-secondary-fixed-variant": "#4c4c7d",
+              "inverse-surface": "#fcf8ff",
+              "tertiary-fixed": "#a3b2fa",
+              "on-background": "#e6e3fc",
+              "error": "#ff6e84",
+              "surface-tint": "#ba9eff",
+              "error-container": "#a70138",
+              "tertiary-container": "#a3b2fa",
+              "surface-container-low": "#111124",
+              "surface": "#0c0c1d",
+              "primary-dim": "#8455ef",
+              "surface-container": "#17172c",
+              "secondary": "#c2c1fb",
+              "primary-fixed": "#ae8dff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0c0c1d;
+            color: #e6e3fc;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(35, 35, 60, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(186, 158, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #ba9eff 0%, #8455ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .button-gradient {
+            background: linear-gradient(135deg, #ba9eff 0%, #8455ef 100%);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary/30 selection:text-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#0c0c1d]/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(23,23,44,0.08)]">
+<div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+<div class="text-2xl font-bold tracking-tighter text-[#e6e3fc] font-headline">AirAlarm</div>
+<div class="hidden md:flex items-center space-gap-8 gap-8">
+<a class="font-['Plus_Jakarta_Sans'] tracking-tight text-sm font-semibold text-[#ba9eff] border-b-2 border-[#8455ef] pb-1" href="#">Features</a>
+<a class="font-['Plus_Jakarta_Sans'] tracking-tight text-sm font-semibold text-[#aba9c0] hover:text-[#e6e3fc] transition-colors duration-300" href="#">How It Works</a>
+<a class="font-['Plus_Jakarta_Sans'] tracking-tight text-sm font-semibold text-[#aba9c0] hover:text-[#e6e3fc] transition-colors duration-300" href="#">Privacy</a>
+</div>
+<button class="button-gradient px-6 py-2.5 rounded-xl font-headline font-bold text-sm text-[#000000] scale-95 active:scale-90 transition-transform">
+                Get Started
+            </button>
+</div>
+</nav>
+<main class="pt-24 overflow-hidden">
+<!-- Hero Section -->
+<section class="relative px-8 pt-12 pb-24 md:pt-24 md:pb-32 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+<div class="flex-1 space-y-8 text-center md:text-left z-10">
+<span class="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-primary font-label text-xs tracking-widest uppercase font-semibold">Evolution of Sleep</span>
+<h1 class="text-5xl md:text-7xl font-extrabold font-headline tracking-tight leading-[1.1] text-on-background">
+                    Wake up <span class="text-gradient">Refreshed</span>, Every Single Day.
+                </h1>
+<p class="text-on-surface-variant text-lg md:text-xl max-w-xl mx-auto md:mx-0 leading-relaxed">
+                    Harness celestial algorithms to align your sleep cycle with your natural circadian rhythm. Science-backed, soul-approved.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
+<button class="button-gradient flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-headline font-bold text-on-primary-fixed shadow-[0_0_20px_rgba(132,85,239,0.3)] hover:shadow-[0_0_30px_rgba(132,85,239,0.5)] transition-all">
+<span class="material-symbols-outlined" data-icon="apple">ios</span>
+                        Download App
+                    </button>
+<button class="glass-card flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-headline font-bold text-on-surface hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+                        Watch Demo
+                    </button>
+</div>
+</div>
+<div class="flex-1 relative w-full max-w-md md:max-w-none">
+<!-- Background Glow -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="relative z-10">
+<img alt="Premium Mobile App Interface" class="w-full h-auto drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)] rounded-[2.5rem]" data-alt="High-fidelity 3D smartphone mockup showing a modern sleep tracking app interface with purple data visualizations and a dark starry background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7FnVg2iTCONEw4mvkHmiNFZB32tpJiBoJWQw6eQV3xqbt9pSLw87VgPxBbahTqSff0n_1dE8ywSRjS9W-gyzh7KJgkOkd3oXoBZIQ27TpxV26S1LLohpQcnzSSAmBPdLBRnI4daA59lHA5I50lFpkoaqQSDZtnTqCO8i_2hypVvb-tVYv-pbzeoFpXyCJuzJL4YYfBecy-uY_cqjtnpz_aWxYs-J-emKT483ul7mMuCvW0eqXY2oQKmcoAZtBZJ8vX2F4cuNoAHGS"/>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="px-8 py-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col items-center text-center space-y-4 mb-16">
+<span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase">Features</span>
+<h2 class="text-4xl md:text-5xl font-extrabold font-headline">Designed for Deep Rest</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Feature 1 -->
+<div class="md:col-span-2 glass-card p-8 rounded-3xl group hover:bg-surface-container-high transition-all duration-500 overflow-hidden relative">
+<div class="relative z-10 space-y-6 max-w-md">
+<div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="bedtime">bedtime</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Smart Cycle Analysis</h3>
+<p class="text-on-surface-variant leading-relaxed">Our AI analyzes your sleep stages in real-time, ensuring you wake up at the precise moment your body is ready.</p>
+</div>
+<img alt="Sleep stage graph" class="absolute top-0 right-0 h-full w-1/2 object-cover opacity-20 group-hover:opacity-40 transition-opacity" data-alt="Abstract scientific visualization of sleep cycles with flowing purple waves and data points on a deep navy background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMD4APkpr9DiQUPEcBZP7ctcYE7-d6mxHDRcWffKA4IT2qZi-13ulHfEBmFgaqd9RDZrphVW3pvPwNy5RyBnyT7fpBxBORRnA8QXjwK6pSDMSfhKl7cHbPHiWdl-6OO9yyt5DHkxoK7WTP-ML_wFFjznIcywD-dY9Tzv-YXZNB6xkHw2Xd_aMNg_ukgrwZYGO2rFxueBljrvw-RWr59BZlTT9vJw3c8R6pbPTwshy1CT4Vos3LdWEDvyqjYTnytp7hRXEWMI_dN1td"/>
+</div>
+<!-- Feature 2 -->
+<div class="glass-card p-8 rounded-3xl space-y-6 hover:bg-surface-container-high transition-all duration-500">
+<div class="w-12 h-12 rounded-2xl bg-tertiary/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-3xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Ambient Soundscapes</h3>
+<p class="text-on-surface-variant leading-relaxed">Curated celestial audio designed to lower cortisol and induce a meditative state.</p>
+</div>
+<!-- Feature 3 -->
+<div class="glass-card p-8 rounded-3xl space-y-6 hover:bg-surface-container-high transition-all duration-500">
+<div class="w-12 h-12 rounded-2xl bg-error/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-3xl" data-icon="vital_signs">vital_signs</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Heart Rate Recovery</h3>
+<p class="text-on-surface-variant leading-relaxed">Monitor how your heart recovers during deep sleep to track overall long-term health metrics.</p>
+</div>
+<!-- Feature 4 -->
+<div class="md:col-span-2 glass-card p-8 rounded-3xl group hover:bg-surface-container-high transition-all duration-500 overflow-hidden relative">
+<div class="relative z-10 space-y-6 max-w-md">
+<div class="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-3xl" data-icon="cloud">cloud</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Atmospheric Sync</h3>
+<p class="text-on-surface-variant leading-relaxed">Synchronizes with smart home devices to adjust room temperature and lighting for optimal rest.</p>
+</div>
+<img alt="Modern bedroom" class="absolute top-0 right-0 h-full w-1/2 object-cover opacity-10 group-hover:opacity-30 transition-opacity" data-alt="A serene modern bedroom at dusk with soft purple ambient lighting and a comfortable bed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOyt40wAdBqpObTyVSW-0d1EPEvZYWsGapaJW-vO9Q6hE6QxwRqiDdM7B3mqp9G6r_k7riTWnJMX_2LuAHpCW8_O9zTlcpei_3dG6Da4Nr9N3nPTlpbxop42a-OQCzELIty1BvY4D8giFOTIydUPj8ttZFbQ82yq9X1U8-uU5QEaGKufOCODp1jJ7IMNWnMIVvm3CY8YCSyAOQI5K-vTxJUJc_siT7UDGvFFn6_OeLiSO4qBxipEkLqA6w4xc4bxXRdc8MtHPemdZg"/>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="px-8 py-24 bg-surface">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+<div class="space-y-12">
+<div class="space-y-4">
+<span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase">The Journey</span>
+<h2 class="text-4xl md:text-5xl font-extrabold font-headline">Three Steps to Perfection</h2>
+</div>
+<div class="space-y-12">
+<div class="flex gap-6 items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary">1</div>
+<div class="space-y-2">
+<h4 class="text-xl font-bold font-headline">Place Your Device</h4>
+<p class="text-on-surface-variant">Simply place your phone on your nightstand. Our sonar technology tracks movement without wearables.</p>
+</div>
+</div>
+<div class="flex gap-6 items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary">2</div>
+<div class="space-y-2">
+<h4 class="text-xl font-bold font-headline">Drift into Silence</h4>
+<p class="text-on-surface-variant">The app automatically begins your chosen celestial soundscape as it detects your heart rate slowing.</p>
+</div>
+</div>
+<div class="flex gap-6 items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center font-headline font-bold text-primary">3</div>
+<div class="space-y-2">
+<h4 class="text-xl font-bold font-headline">Awaken with Ease</h4>
+<p class="text-on-surface-variant">A gentle, progressive light and sound sequence begins during your lightest sleep phase.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative">
+<div class="absolute inset-0 bg-primary/20 blur-[120px] rounded-full"></div>
+<img alt="Peaceful Sleep" class="relative z-10 rounded-[3rem] object-cover aspect-[4/5] shadow-2xl" data-alt="A peaceful woman sleeping soundly in a dark room with a soft lavender glow on her face, cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7EC4LHMBsviy4cuDHK2KUoJ9DEaLxpzGFagR_iI9HQMx3T4jT45HecQM7-vEaPT3UWil58rJ1Vh-zixl5anO0pO5hIy_V8whjVJ3lmsylvAC1ErM8R7DABqA2X2V6zJwlkkDQ24TJ32AjVl-jpf9E3vSxuhfDWfr6JSX4R02uC_jLQl43SYFm55pGn2YDDZkt2uqZocDxTjD51NR2xzA4YC0Sd0M7Gk1ERKO0lsHBfvuCGg-cj9tYqLtdl34P9ZG_LFZrRBGkn_Rr"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="px-8 py-24 bg-surface-container-low overflow-hidden">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col items-center text-center space-y-4 mb-16">
+<span class="text-primary font-label text-sm tracking-[0.2em] font-bold uppercase">Community</span>
+<h2 class="text-4xl md:text-5xl font-extrabold font-headline">Loved by Dreamers</h2>
+</div>
+<div class="flex gap-6 overflow-x-auto pb-12 hide-scrollbar snap-x">
+<!-- Testimonial 1 -->
+<div class="flex-shrink-0 w-80 md:w-96 glass-card p-8 rounded-3xl snap-center space-y-6">
+<div class="flex text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-lg italic text-on-surface leading-relaxed">"I've never felt more in tune with my morning routine. The gentle wake-up is a game changer for my productivity."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest">
+<img alt="User" class="w-full h-full rounded-full object-cover" data-alt="Professional headshot of a smiling man in his 30s with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPK7CoPeQKwSphsjxupKeDZDgMENJUeyXhZJj-e-4qz2_8jtj10U-kP_pG8dJqYmYFJg34F_w0BysQbVpOn8PVJD8hfkQ33POvHVr_bfxuAZ5v9dOu1FwNVwvn6uLOXikSMzOAbYkPsNYRkHz_2uUdgPV_zrc6g9HeNtCh5lVUx1vx7_Urz5O3RC3Nmj8keMdx17bXa1KjACjWFWImIpyCdYAlXZKODKNR9d8UV6T8Os5AV-FxbYo_QOoCsSuOl8XtC4EqZtllhTbm"/>
+</div>
+<div>
+<p class="font-bold font-headline">Marcus Chen</p>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider">Product Designer</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="flex-shrink-0 w-80 md:w-96 glass-card p-8 rounded-3xl snap-center space-y-6">
+<div class="flex text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-lg italic text-on-surface leading-relaxed">"The soundscapes are hauntingly beautiful. It's like being cradled by the stars themselves. Truly high-end."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest">
+<img alt="User" class="w-full h-full rounded-full object-cover" data-alt="Headshot of a serene woman with long dark hair looking calmly at the camera" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8WH7WLqNTdFh1hJkO3VGitHRRW9HhTxlPG0tu_uevYx4yvUhHaQ6ijJw_OzIN3IcIFafkBo-IYKNk5IaOt9VT41yh5uz3SrytyeWLdxRiNWZzYPVI51a0A-XgaAtZLmIWgiEuczUUDl_n1tategN30l3qWDphTMzypwbrWFk2Nyd1j--tIgMawmJAN6fgOjO6dMeREBs9EFGnwyljA8Ny2V0y1jefgvvO7NaWA_pGVKRLCRwmhc2YJ15mjEEz4YvZcOevQzeLsIAm"/>
+</div>
+<div>
+<p class="font-bold font-headline">Elena Rodriguez</p>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider">Wellness Coach</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="flex-shrink-0 w-80 md:w-96 glass-card p-8 rounded-3xl snap-center space-y-6">
+<div class="flex text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-lg italic text-on-surface leading-relaxed">"The accuracy of the sleep tracking is incredible. I finally understand why I was always tired at 3 PM."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest">
+<img alt="User" class="w-full h-full rounded-full object-cover" data-alt="Modern portrait of a man with short hair and a thoughtful expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCH2fjfUJRJqXKlJmazIEPee3jssxtluQjWauYEPijt_DZc859naBVEwutp3HzuV5HqsD4nEDTDu2MHfEwK6Rwhuvgp-CZ56zAJkRlQt_StG4qGI_ej3CyzSkvZ6tGtOApE1p3evDuoR-UUHvSphrC2qP53yfu3GcLblkXke32eQAlAtv3QRE6Ypsdh1L_RGMV4MJ3ltjZ-9MMlbu8KwsoeEnu3tHuIc1HN2_WdwPywJkfCk05EBbRK_b_qU8KBkvrg7qaIvt7Jsn7"/>
+</div>
+<div>
+<p class="font-bold font-headline">Julian Thorne</p>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider">Biohacker</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="px-8 py-24 relative overflow-hidden">
+<div class="max-w-4xl mx-auto text-center relative z-10 glass-card p-12 md:p-24 rounded-[3rem]">
+<h2 class="text-4xl md:text-6xl font-extrabold font-headline mb-8">Ready for a <span class="text-gradient">Celestial</span> Sleep?</h2>
+<p class="text-on-surface-variant text-xl mb-12 max-w-2xl mx-auto">Join over 500,000 dreamers who have transformed their relationship with the night.</p>
+<div class="flex flex-col sm:flex-row gap-6 justify-center">
+<button class="button-gradient flex items-center justify-center gap-3 px-12 py-5 rounded-2xl font-headline font-bold text-xl text-on-primary-fixed shadow-[0_0_40px_rgba(132,85,239,0.4)] hover:shadow-[0_0_60px_rgba(132,85,239,0.6)] transition-all">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        Get the App
+                    </button>
+</div>
+<p class="mt-8 text-sm text-on-surface-variant/60 font-label">Available on iOS and Android</p>
+</div>
+<!-- Atmospheric BG -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full -z-10 opacity-30">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/40 blur-[150px] rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-tertiary/20 blur-[150px] rounded-full"></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0c0c1d] w-full py-12 px-8 no-border bg-[#111124]">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto gap-6">
+<div class="text-lg font-bold text-[#e6e3fc] font-headline">AirAlarm</div>
+<div class="flex gap-8">
+<a class="font-['Manrope'] text-xs tracking-wide uppercase text-[#aba9c0] hover:text-[#e6e3fc] transition-colors" href="#">Terms of Service</a>
+<a class="font-['Manrope'] text-xs tracking-wide uppercase text-[#aba9c0] hover:text-[#e6e3fc] transition-colors" href="#">Privacy Policy</a>
+<a class="font-['Manrope'] text-xs tracking-wide uppercase text-[#aba9c0] hover:text-[#e6e3fc] transition-colors" href="#">Cookie Settings</a>
+<a class="font-['Manrope'] text-xs tracking-wide uppercase text-[#aba9c0] hover:text-[#e6e3fc] transition-colors" href="#">Support</a>
+</div>
+<p class="font-['Manrope'] text-xs tracking-wide uppercase text-[#aba9c0]">© 2024 AirAlarm. Celestial Sleep Technology.</p>
+</div>
+</footer>
+</body></html>

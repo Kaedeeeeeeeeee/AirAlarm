@@ -178,8 +178,8 @@ struct SleepCycleCalculatorTests {
 
 struct WhiteNoiseTypeTests {
 
-    @Test func allCases_containsFiveTypes() {
-        #expect(WhiteNoiseType.allCases.count == 5)
+    @Test func allCases_containsSevenTypes() {
+        #expect(WhiteNoiseType.allCases.count == 7)
     }
 
     @Test func fileName_mappingsAreCorrect() {
@@ -188,6 +188,8 @@ struct WhiteNoiseTypeTests {
         #expect(WhiteNoiseType.forest.fileName == "forest")
         #expect(WhiteNoiseType.fan.fileName == "fan")
         #expect(WhiteNoiseType.pureTone.fileName == "whitenoise")
+        #expect(WhiteNoiseType.airplane.fileName == "airplane")
+        #expect(WhiteNoiseType.fire.fileName == "fire")
     }
 
     @Test func rawValue_roundTrip() {
@@ -203,6 +205,8 @@ struct WhiteNoiseTypeTests {
         #expect(WhiteNoiseType.forest.rawValue == "Forest")
         #expect(WhiteNoiseType.fan.rawValue == "Fan")
         #expect(WhiteNoiseType.pureTone.rawValue == "White Noise")
+        #expect(WhiteNoiseType.airplane.rawValue == "Airplane")
+        #expect(WhiteNoiseType.fire.rawValue == "Fire")
     }
 
     @Test func id_matchesRawValue() {
@@ -568,11 +572,11 @@ struct LocalizationManagerTests {
         loc.current = .chinese
         let requiredKeys = [
             "wake_window", "drag_hint", "good_morning", "tap_dismiss",
-            "snooze", "you_slept", "playing", "start", "settings",
+            "snooze", "you_slept", "playing", "start", "stop", "settings",
             "language", "history", "about", "volume", "no_history",
             "sleep_time", "wake_time", "cycles", "detecting_sleep",
             "ready_sleep", "lets_go", "next", "skip",
-            "earliest_wake", "latest_wake"
+            "earliest_wake", "latest_wake", "cancel_alarm"
         ]
         for key in requiredKeys {
             #expect(loc.t(key) != key, "Missing Chinese translation for '\(key)'")
@@ -584,11 +588,11 @@ struct LocalizationManagerTests {
         loc.current = .japanese
         let requiredKeys = [
             "wake_window", "drag_hint", "good_morning", "tap_dismiss",
-            "snooze", "you_slept", "playing", "start", "settings",
+            "snooze", "you_slept", "playing", "start", "stop", "settings",
             "language", "history", "about", "volume", "no_history",
             "sleep_time", "wake_time", "cycles", "detecting_sleep",
             "ready_sleep", "lets_go", "next", "skip",
-            "earliest_wake", "latest_wake"
+            "earliest_wake", "latest_wake", "cancel_alarm"
         ]
         for key in requiredKeys {
             #expect(loc.t(key) != key, "Missing Japanese translation for '\(key)'")
@@ -617,33 +621,104 @@ struct LocalizationManagerTests {
     // Note: Tests that write/read UserDefaults are serialized to avoid races.
 
     @Test func languageChange_persistsToUserDefaults() {
+        let defaults = UserDefaults.standard
         let loc = LocalizationManager()
         loc.current = .japanese
-        #expect(UserDefaults.standard.string(forKey: "appLanguage") == "ja")
+        #expect(defaults.string(forKey: "appLanguage") == "ja")
+        #expect(defaults.bool(forKey: "hasExplicitLanguageChoice") == true)
 
         loc.current = .chinese
-        #expect(UserDefaults.standard.string(forKey: "appLanguage") == "zh")
+        #expect(defaults.string(forKey: "appLanguage") == "zh")
 
         // Clean up
         loc.current = .english
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
     }
 
-    @Test func init_restoresFromUserDefaults() {
-        UserDefaults.standard.set("ja", forKey: "appLanguage")
+    @Test func init_restoresExplicitChoice() {
+        let defaults = UserDefaults.standard
+        defaults.set("ja", forKey: "appLanguage")
+        defaults.set(true, forKey: "hasExplicitLanguageChoice")
         let loc = LocalizationManager()
         #expect(loc.current == .japanese)
 
         // Clean up
-        UserDefaults.standard.set("en", forKey: "appLanguage")
+        defaults.set("en", forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
     }
 
-    @Test func init_invalidStoredValue_defaultsToEnglish() {
-        UserDefaults.standard.set("invalid_lang", forKey: "appLanguage")
+    @Test func init_migratesExistingUser() {
+        let defaults = UserDefaults.standard
+        // Simulate existing user: has appLanguage but no explicit flag
+        defaults.set("zh", forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
+
         let loc = LocalizationManager()
-        #expect(loc.current == .english)
+        #expect(loc.current == .chinese)
+        #expect(defaults.bool(forKey: "hasExplicitLanguageChoice") == true)
 
         // Clean up
-        UserDefaults.standard.removeObject(forKey: "appLanguage")
+        defaults.removeObject(forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
+    }
+
+    @Test func init_firstLaunch_autoDetectsLanguage() {
+        let defaults = UserDefaults.standard
+        // Simulate fresh install: no stored values
+        defaults.removeObject(forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
+
+        let loc = LocalizationManager()
+        // Should pick a valid language (auto-detected or English fallback)
+        let validLanguages = LocalizationManager.Language.allCases
+        #expect(validLanguages.contains(loc.current))
+        // Should store the detected language
+        #expect(defaults.string(forKey: "appLanguage") != nil)
+        // Should NOT set explicit flag
+        #expect(defaults.bool(forKey: "hasExplicitLanguageChoice") == false)
+
+        // Clean up
+        defaults.removeObject(forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
+    }
+
+    @Test func init_invalidStoredValue_withExplicitFlag_defaultsToEnglish() {
+        let defaults = UserDefaults.standard
+        defaults.set("invalid_lang", forKey: "appLanguage")
+        defaults.set(true, forKey: "hasExplicitLanguageChoice")
+        let loc = LocalizationManager()
+        // Invalid rawValue with explicit flag → falls through to auto-detect
+        let validLanguages = LocalizationManager.Language.allCases
+        #expect(validLanguages.contains(loc.current))
+
+        // Clean up
+        defaults.removeObject(forKey: "appLanguage")
+        defaults.removeObject(forKey: "hasExplicitLanguageChoice")
+    }
+
+    // MARK: - Bedtime Reminder Translations
+
+    // MARK: - New ClockDial Translation Keys
+
+    @Test func t_stopAndCancelAlarm_english() {
+        let loc = LocalizationManager()
+        loc.current = .english
+        #expect(loc.t("stop") == "Stop")
+        #expect(loc.t("cancel_alarm") == "Cancel alarm")
+    }
+
+    @Test func t_stopAndCancelAlarm_chinese() {
+        let loc = LocalizationManager()
+        loc.current = .chinese
+        #expect(loc.t("stop") == "停止")
+        #expect(loc.t("cancel_alarm") == "取消闹钟")
+    }
+
+    @Test func t_stopAndCancelAlarm_japanese() {
+        let loc = LocalizationManager()
+        loc.current = .japanese
+        #expect(loc.t("stop") == "停止")
+        #expect(loc.t("cancel_alarm") == "アラームを取消")
     }
 
     // MARK: - Bedtime Reminder Translations

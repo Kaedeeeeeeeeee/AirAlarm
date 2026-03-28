@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct ClockDialView: View {
+    @Environment(LocalizationManager.self) private var loc
     @Binding var wakeWindowStart: Date
     let appState: AppState
     let sleepTime: Date?
@@ -216,7 +217,7 @@ struct ClockDialView: View {
                 case .idle:
                     VStack(spacing: 8) {
                         Image(systemName: "play.fill").font(.system(size: 32))
-                        Text("Start").font(.system(size: 14, weight: .semibold, design: .rounded))
+                        Text(loc.t("start")).font(.system(size: 14, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(.white)
 
@@ -226,7 +227,7 @@ struct ClockDialView: View {
                 case .sleepDetected:
                     VStack(spacing: 6) {
                         Image(systemName: "bed.double.fill").font(.system(size: 24))
-                        Text("Detecting...").font(.system(size: 11, weight: .medium, design: .rounded))
+                        Text(loc.t("detecting_sleep")).font(.system(size: 11, weight: .medium, design: .rounded))
                     }
                     .foregroundStyle(.purple)
 
@@ -235,7 +236,7 @@ struct ClockDialView: View {
                         if let wakeTime {
                             Text(wakeTime, style: .time)
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                            Text("\(scheduledCycles) cycles")
+                            Text("\(scheduledCycles) \(loc.t("cycles"))")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.6))
                         }
@@ -251,10 +252,10 @@ struct ClockDialView: View {
 
     private var centerButtonLabel: String {
         switch appState {
-        case .idle: "Start"
-        case .playingNoise: "Stop"
-        case .sleepDetected: "Detecting sleep"
-        case .alarmSet: "Cancel alarm"
+        case .idle: loc.t("start")
+        case .playingNoise: loc.t("stop")
+        case .sleepDetected: loc.t("detecting_sleep")
+        case .alarmSet: loc.t("cancel_alarm")
         }
     }
 

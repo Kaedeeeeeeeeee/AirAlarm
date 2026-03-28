@@ -86,6 +86,7 @@ struct AirAlarmApp: App {
             .preferredColorScheme(.dark)
             .onAppear {
                 showOnboarding = !hasSeenOnboarding
+                alarmManager.localization = localization
                 BackgroundTaskManager.register(alarmManager: alarmManager)
             }
             .onOpenURL { url in
