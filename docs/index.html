@@ -86,12 +86,14 @@
         .logo-icon {
             width: 36px;
             height: 36px;
-            background: linear-gradient(135deg, var(--bg-secondary), var(--purple));
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
+            overflow: hidden;
+        }
+
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         nav a.nav-link {
@@ -485,7 +487,7 @@
         <!-- Navigation -->
         <nav>
             <a href="#" class="logo">
-                <div class="logo-icon">&#x1F319;</div>
+                <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#141432"/><stop offset="100%" stop-color="#1A1A40"/></linearGradient></defs><rect width="1024" height="1024" rx="224" fill="url(#bg)"/><circle cx="300" cy="220" r="80" fill="#2A2A5A"/><circle cx="724" cy="220" r="80" fill="#2A2A5A"/><line x1="340" y1="790" x2="260" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><line x1="684" y1="790" x2="764" y2="900" stroke="#2A2A5A" stroke-width="42" stroke-linecap="round"/><circle cx="512" cy="512" r="290" fill="none" stroke="#2A2A5A" stroke-width="110"/><line x1="512" y1="512" x2="445" y2="433" stroke="#4A4A7A" stroke-width="52" stroke-linecap="round"/><line x1="512" y1="512" x2="680" y2="512" stroke="#4A4A7A" stroke-width="36" stroke-linecap="round"/><circle cx="512" cy="512" r="30" fill="#4A4A7A"/><path d="M 261 657 A 290 290 0 0 0 512 802" fill="none" stroke="#D0D0E8" stroke-width="114" stroke-linecap="round"/></svg></div>
                 AirAlarm
             </a>
             <div style="display:flex; gap:24px;">
@@ -540,22 +542,22 @@
             <h2 class="section-title">Everything You Need for Better Sleep</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">&#x1F4A4;</div>
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
                     <h3>Sleep Cycle Detection</h3>
                     <p>Your AirPods detect when you fall asleep. We start tracking your 90-minute sleep cycles automatically.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">&#x1F3B5;</div>
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
                     <h3>White Noise Library</h3>
                     <p>Fall asleep to rain, ocean waves, forest sounds, fan noise, or pure white noise. Volume fades as you drift off.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">&#x2600;&#xFE0F;</div>
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
                     <h3>Smart Wake Scheduling</h3>
                     <p>Set a wake window and we'll find the perfect moment at the end of a sleep cycle to wake you feeling refreshed.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">&#x1F4CA;</div>
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B7BF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
                     <h3>Sleep History</h3>
                     <p>Track your sleep patterns over time. See how many cycles you complete and how your sleep duration varies.</p>
                 </div>
