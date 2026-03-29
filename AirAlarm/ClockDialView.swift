@@ -43,23 +43,27 @@ struct ClockDialView: View {
             let trackRadius = (size - trackLineWidth) / 2 - hourLabelInset
 
             ZStack {
-                backgroundTrack(center: center, radius: trackRadius)
-                wakeWindowArc(center: center, radius: trackRadius)
+                ZStack {
+                    backgroundTrack(center: center, radius: trackRadius)
+                    wakeWindowArc(center: center, radius: trackRadius)
 
-                if let sleepTime, appState == .alarmSet {
-                    cycleDots(center: center, radius: trackRadius, sleepTime: sleepTime)
+                    if let sleepTime, appState == .alarmSet {
+                        cycleDots(center: center, radius: trackRadius, sleepTime: sleepTime)
+                    }
+
+                    hourLabels(center: center, radius: trackRadius + trackLineWidth / 2 + 16)
+
+                    if appState == .idle || appState == .playingNoise {
+                        arcTimeLabels(center: center, radius: trackRadius)
+                    }
+
+                    if appState == .alarmSet {
+                        sleepWakeMarkers(center: center, radius: trackRadius)
+                    }
                 }
+                .drawingGroup()
 
-                hourLabels(center: center, radius: trackRadius + trackLineWidth / 2 + 16)
                 centerContent(center: center, radius: trackRadius * 0.45)
-
-                if appState == .idle || appState == .playingNoise {
-                    arcTimeLabels(center: center, radius: trackRadius)
-                }
-
-                if appState == .alarmSet {
-                    sleepWakeMarkers(center: center, radius: trackRadius)
-                }
             }
             .contentShape(Circle())
             .gesture(arcDragGesture(center: center, radius: trackRadius))
@@ -92,28 +96,24 @@ struct ClockDialView: View {
         let startAngle = angle(for: wakeWindowStart)
         let endAngle = angle(for: wakeWindowEnd)
 
+        let arcPath = Path { p in
+            p.addArc(center: center, radius: radius,
+                     startAngle: .radians(startAngle), endAngle: .radians(endAngle), clockwise: false)
+        }
+
         return ZStack {
             // Outer glow
-            Path { p in
-                p.addArc(center: center, radius: radius,
-                         startAngle: .radians(startAngle), endAngle: .radians(endAngle), clockwise: false)
-            }
-            .stroke(.white.opacity(0.06), style: StrokeStyle(lineWidth: arcLineWidth + 12, lineCap: .round))
-            .blur(radius: 6)
+            arcPath
+                .stroke(.white.opacity(0.06), style: StrokeStyle(lineWidth: arcLineWidth + 12, lineCap: .round))
+                .blur(radius: 6)
 
             // Main arc
-            Path { p in
-                p.addArc(center: center, radius: radius,
-                         startAngle: .radians(startAngle), endAngle: .radians(endAngle), clockwise: false)
-            }
-            .stroke(.white.opacity(0.22), style: StrokeStyle(lineWidth: arcLineWidth, lineCap: .round))
+            arcPath
+                .stroke(.white.opacity(0.22), style: StrokeStyle(lineWidth: arcLineWidth, lineCap: .round))
 
             // Inner highlight
-            Path { p in
-                p.addArc(center: center, radius: radius,
-                         startAngle: .radians(startAngle), endAngle: .radians(endAngle), clockwise: false)
-            }
-            .stroke(.white.opacity(0.12), style: StrokeStyle(lineWidth: arcLineWidth - 12, lineCap: .round))
+            arcPath
+                .stroke(.white.opacity(0.12), style: StrokeStyle(lineWidth: arcLineWidth - 12, lineCap: .round))
         }
     }
 
@@ -208,11 +208,7 @@ struct ClockDialView: View {
 
     private func centerContent(center: CGPoint, radius: CGFloat) -> some View {
         Button(action: onTapCenter) {
-            ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: radius * 2, height: radius * 2)
-
+            Group {
                 switch appState {
                 case .idle:
                     VStack(spacing: 8) {
@@ -244,8 +240,10 @@ struct ClockDialView: View {
                     .foregroundStyle(.white)
                 }
             }
+            .frame(width: radius * 2, height: radius * 2)
         }
         .buttonStyle(.plain)
+        .glassEffect(.regular, in: .circle)
         .accessibilityLabel(centerButtonLabel)
         .position(center)
     }

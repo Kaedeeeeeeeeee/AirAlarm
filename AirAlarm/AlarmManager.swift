@@ -1,5 +1,7 @@
 import UserNotifications
 import AVFoundation
+import MediaPlayer
+import UIKit
 import os
 
 @Observable
@@ -17,6 +19,9 @@ class AlarmManager {
     private var alarmPlayer: AVAudioPlayer?
     private var alarmTimer: Timer?
     private var volumeTimer: Timer?
+    private var vibrationTimer: Timer?
+    private var previousVolume: Float?
+    private var volumeView: MPVolumeView?
 
     func requestPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
@@ -105,6 +110,10 @@ class AlarmManager {
             Self.logger.error("Failed to configure alarm audio session: \(error)")
         }
 
+        // Save current volume and set to max
+        previousVolume = session.outputVolume
+        setSystemVolume(1.0)
+
         guard let url = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else { return }
 
         do {
@@ -116,6 +125,7 @@ class AlarmManager {
             self.alarmPlayer = player
             self.isRinging = true
             startVolumeRamp()
+            startVibration()
         } catch {
             Self.logger.error("Failed to play alarm: \(error)")
         }
@@ -124,9 +134,36 @@ class AlarmManager {
     func stopRinging() {
         volumeTimer?.invalidate()
         volumeTimer = nil
+        vibrationTimer?.invalidate()
+        vibrationTimer = nil
         alarmPlayer?.stop()
         alarmPlayer = nil
         isRinging = false
+
+        // Restore previous volume
+        if let prev = previousVolume {
+            setSystemVolume(prev)
+            previousVolume = nil
+        }
+    }
+
+    private func setSystemVolume(_ value: Float) {
+        if volumeView == nil {
+            volumeView = MPVolumeView(frame: .zero)
+        }
+        if let slider = volumeView?.subviews.first(where: { $0 is UISlider }) as? UISlider {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                slider.value = value
+            }
+        }
+    }
+
+    private func startVibration() {
+        // Vibrate immediately, then repeat every 1.5 seconds
+        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        vibrationTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
     }
 
     private func startVolumeRamp() {

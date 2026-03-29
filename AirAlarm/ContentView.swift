@@ -52,6 +52,18 @@ struct ContentView: View {
                     .accessibilityIdentifier("settingsButton")
 
                     Spacer()
+
+                    Button {
+                        alarmManager.startRinging()
+                    } label: {
+                        Image(systemName: "bell.and.waves.left.and.right")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .padding(10)
+                    }
+                    .glassEffect(.clear, in: .circle)
+                    .accessibilityLabel("Test Alarm")
+                    .accessibilityIdentifier("testAlarmButton")
                 }
                 .padding(.horizontal, 8)
                 .padding(.top, 4)
@@ -305,6 +317,8 @@ struct ContentView: View {
 
     private func onSleepDetected() {
         appState = .sleepDetected
+        // Keep app alive in background with silent audio
+        audioManager.startSilentBackgroundAudio()
         guard let sleepTime = audioManager.sleepTime else { return }
 
         let earliest = normalizedWakeTime(wakeWindowStart, after: sleepTime)
