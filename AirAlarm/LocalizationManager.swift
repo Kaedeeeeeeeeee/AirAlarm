@@ -107,6 +107,13 @@ class LocalizationManager {
             "sound_fan": "Fan",
             "sound_whitenoise": "White Noise",
             "sound_airplane": "Airplane",
+            "screen_saver": "Screen Saver",
+            "screen_saver_hint": "Keeps the alarm reliable by preventing screen lock. Display dims to black to save power.",
+            "screensaver_alert_title": "Keep App Active",
+            "screensaver_alert_message": "For a reliable alarm, please keep AirAlarm on screen and avoid switching apps while sleeping. The screen saver will dim the display to save power.",
+            "screensaver_alert_ok": "Got it",
+            "bg_warning_title": "AirAlarm is in the background",
+            "bg_warning_body": "Return to AirAlarm to ensure your alarm rings on time.",
         ],
         .chinese: [
             "wake_window": "唤醒窗口",
@@ -167,6 +174,13 @@ class LocalizationManager {
             "sound_fan": "风扇",
             "sound_whitenoise": "白噪音",
             "sound_airplane": "飞机",
+            "screen_saver": "屏幕保护",
+            "screen_saver_hint": "防止锁屏以确保闹钟正常运行，屏幕将变为全黑以节省电量。",
+            "screensaver_alert_title": "保持应用活跃",
+            "screensaver_alert_message": "为确保闹钟正常响起，请在睡眠期间保持 AirAlarm 在前台，避免切换到其他应用。屏幕保护会将屏幕变暗以节省电量。",
+            "screensaver_alert_ok": "知道了",
+            "bg_warning_title": "AirAlarm 已进入后台",
+            "bg_warning_body": "请返回 AirAlarm 以确保闹钟准时响起。",
         ],
         .japanese: [
             "wake_window": "起床ウィンドウ",
@@ -227,6 +241,13 @@ class LocalizationManager {
             "sound_fan": "ファン",
             "sound_whitenoise": "ホワイトノイズ",
             "sound_airplane": "飛行機",
+            "screen_saver": "スクリーンセーバー",
+            "screen_saver_hint": "画面ロックを防止してアラームを確実に動作させます。省電力のため画面は黒くなります。",
+            "screensaver_alert_title": "アプリをアクティブに保つ",
+            "screensaver_alert_message": "アラームを確実に鳴らすため、睡眠中は AirAlarm を画面に表示したまま、他のアプリに切り替えないでください。スクリーンセーバーが画面を暗くして電力を節約します。",
+            "screensaver_alert_ok": "了解",
+            "bg_warning_title": "AirAlarm がバックグラウンドになりました",
+            "bg_warning_body": "アラームを確実に鳴らすため、AirAlarm に戻ってください。",
         ]
     ]
 }

@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import Combine
+import UserNotifications
 
 enum AppState {
     case idle
@@ -27,6 +29,12 @@ struct ContentView: View {
     @AppStorage("wakeWindowStartHour") private var storedHour: Int = 6
     @AppStorage("wakeWindowStartMinute") private var storedMinute: Int = 30
     @AppStorage("noiseVolume") private var storedVolume: Double = 0.7
+    @AppStorage("screenSaverEnabled") private var screenSaverEnabled: Bool = true
+    @AppStorage("hasSeenScreenSaverAlert") private var hasSeenScreenSaverAlert = false
+    @State private var showScreenSaverAlert = false
+    @State private var screenSaverActive = false
+    @State private var lastInteractionTime = Date()
+    private let screenSaverTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var wakeWindowEnd: Date {
         wakeWindowStart.addingTimeInterval(90 * 60)
@@ -38,87 +46,120 @@ struct ContentView: View {
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.5), value: selectedNoise)
 
-            VStack(spacing: 0) {
-                // Top bar: settings + debug
-                HStack {
-                    Button { showSettings = true } label: {
-                        Image(systemName: "gearshape")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.4))
-                            .padding(10)
+            if !screenSaverActive {
+                VStack(spacing: 0) {
+                    // Top bar: always in layout, hidden via opacity in sleep mode
+                    HStack {
+                        Button { showSettings = true } label: {
+                            Image(systemName: "gearshape")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.4))
+                                .padding(10)
+                        }
+                        .glassEffect(.clear, in: .circle)
+                        .accessibilityLabel(loc.t("settings"))
+                        .accessibilityIdentifier("settingsButton")
+
+                        Spacer()
+
+                        Button {
+                            alarmManager.startRinging()
+                        } label: {
+                            Image(systemName: "bell.and.waves.left.and.right")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.4))
+                                .padding(10)
+                        }
+                        .glassEffect(.clear, in: .circle)
+                        .accessibilityLabel("Test Alarm")
+                        .accessibilityIdentifier("testAlarmButton")
                     }
-                    .glassEffect(.clear, in: .circle)
-                    .accessibilityLabel(loc.t("settings"))
-                    .accessibilityIdentifier("settingsButton")
+                    .padding(.horizontal, 8)
+                    .padding(.top, 4)
+                    .opacity(isSleepModeActive ? 0 : 1)
+                    .allowsHitTesting(!isSleepModeActive)
+
+                    Spacer().frame(maxHeight: 100)
+
+                    wakeWindowHeader
+                        .padding(.bottom, 16)
+
+                    ClockDialView(
+                        wakeWindowStart: $wakeWindowStart,
+                        appState: appState,
+                        sleepTime: audioManager.sleepTime,
+                        wakeTime: alarmManager.scheduledWakeTime,
+                        scheduledCycles: alarmManager.scheduledCycles,
+                        onTapCenter: { handleAction() }
+                    )
+                    .frame(width: 350, height: 350)
+
+                    // Status area — fixed height to prevent clock shift
+                    ZStack {
+                        if appState == .alarmSet {
+                            alarmInfoPill
+                                .transition(.scale.combined(with: .opacity))
+                        }
+
+                        if appState == .playingNoise {
+                            playingStatus
+                                .transition(.scale.combined(with: .opacity))
+                        }
+
+                        if audioManager.isConfirmingSleep {
+                            HStack(spacing: 8) {
+                                ProgressView().tint(.white)
+                                Text(loc.t("detecting_sleep"))
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white.opacity(0.6))
+                            .accessibilityIdentifier("sleepDetectionIndicator")
+                            .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    .frame(height: 60)
+                    .padding(.top, 16)
 
                     Spacer()
 
-                    Button {
-                        alarmManager.startRinging()
-                    } label: {
-                        Image(systemName: "bell.and.waves.left.and.right")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.4))
-                            .padding(10)
+                    // Bottom controls — fixed height to prevent clock position shift
+                    VStack(spacing: 0) {
+                        if isSleepModeActive {
+                            screenSaverToggle
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 16)
+                                .transition(.opacity)
+
+                            volumeSlider
+                                .padding(.bottom, 12)
+                                .transition(.opacity)
+                        } else {
+                            Spacer()
+                            noisePickerView
+                                .padding(.bottom, 16)
+                                .transition(.opacity.animation(.easeOut(duration: 0.15)))
+                        }
                     }
-                    .glassEffect(.clear, in: .circle)
-                    .accessibilityLabel("Test Alarm")
-                    .accessibilityIdentifier("testAlarmButton")
+                    .frame(height: 150)
                 }
-                .padding(.horizontal, 8)
-                .padding(.top, 4)
-
-                Spacer()
-
-                wakeWindowHeader
-                    .padding(.bottom, 16)
-
-                ClockDialView(
-                    wakeWindowStart: $wakeWindowStart,
-                    appState: appState,
-                    sleepTime: audioManager.sleepTime,
-                    wakeTime: alarmManager.scheduledWakeTime,
-                    scheduledCycles: alarmManager.scheduledCycles,
-                    onTapCenter: { handleAction() }
-                )
-                .frame(width: 350, height: 350)
-
-                if appState == .alarmSet {
-                    alarmInfoPill
-                        .transition(.scale.combined(with: .opacity))
-                        .padding(.top, 16)
-                }
-
-                if appState == .playingNoise {
-                    playingStatus
-                        .transition(.scale.combined(with: .opacity))
-                        .padding(.top, 16)
-                }
-
-                // Confirming sleep indicator
-                if audioManager.isConfirmingSleep {
-                    HStack(spacing: 8) {
-                        ProgressView().tint(.white)
-                        Text(loc.t("detecting_sleep"))
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .accessibilityIdentifier("sleepDetectionIndicator")
-                    .transition(.scale.combined(with: .opacity))
-                    .padding(.top, 16)
-                }
-
-                Spacer()
-
-                // Volume slider
-                volumeSlider
-                    .padding(.bottom, 12)
-
-                noisePickerView
-                    .padding(.bottom, 16)
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+
+            // Screen saver overlay
+            if screenSaverActive {
+                Color.black
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            screenSaverActive = false
+                        }
+                        lastInteractionTime = Date()
+                    }
+            }
         }
+        .animation(.easeInOut(duration: 0.5), value: screenSaverActive)
+        .statusBarHidden(screenSaverActive)
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
@@ -136,6 +177,46 @@ struct ContentView: View {
             let cal = Calendar.current
             storedHour = cal.component(.hour, from: new)
             storedMinute = cal.component(.minute, from: new)
+        }
+        .onChange(of: alarmManager.isRinging) { wasRinging, isRinging in
+            if wasRinging && !isRinging {
+                saveSleepRecord()
+                appState = .idle
+                UIApplication.shared.isIdleTimerDisabled = false
+                screenSaverActive = false
+            }
+        }
+        .onReceive(screenSaverTimer) { _ in
+            guard screenSaverEnabled, !screenSaverActive, isSleepModeActive else { return }
+            if Date().timeIntervalSince(lastInteractionTime) >= 30 {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    screenSaverActive = true
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            if screenSaverEnabled && isSleepModeActive {
+                UIApplication.shared.isIdleTimerDisabled = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            guard isSleepModeActive else { return }
+            let content = UNMutableNotificationContent()
+            content.title = loc.t("bg_warning_title")
+            content.body = loc.t("bg_warning_body")
+            content.sound = .default
+            content.interruptionLevel = .timeSensitive
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(identifier: "bg-warning", content: content, trigger: trigger)
+            UNUserNotificationCenter.current().add(request)
+        }
+        .alert(loc.t("screensaver_alert_title"), isPresented: $showScreenSaverAlert) {
+            Button(loc.t("screensaver_alert_ok")) {
+                hasSeenScreenSaverAlert = true
+                startSleep()
+            }
+        } message: {
+            Text(loc.t("screensaver_alert_message"))
         }
     }
 
@@ -162,6 +243,25 @@ struct ContentView: View {
             Text(loc.t("drag_hint"))
                 .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.25))
+        }
+    }
+
+    // MARK: - Screen Saver Toggle
+
+    private var screenSaverToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $screenSaverEnabled) {
+                Text(loc.t("screen_saver"))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .tint(.green)
+            .accessibilityIdentifier("screenSaverToggle")
+
+            Text(loc.t("screen_saver_hint"))
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.3))
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -289,17 +389,30 @@ struct ContentView: View {
         audioManager.setVolume(Float(storedVolume))
     }
 
+    // MARK: - Screen Saver Helpers
+
+    private var isSleepModeActive: Bool {
+        appState == .playingNoise || appState == .sleepDetected || appState == .alarmSet
+    }
+
     // MARK: - Business Logic
 
     private func handleAction() {
         switch appState {
-        case .idle: startSleep()
+        case .idle:
+            if !hasSeenScreenSaverAlert {
+                showScreenSaverAlert = true
+            } else {
+                startSleep()
+            }
         case .playingNoise: stopEverything()
         case .sleepDetected: break
         case .alarmSet:
             withAnimation(.spring(duration: 0.4)) {
                 alarmManager.cancelAlarm()
                 appState = .idle
+                UIApplication.shared.isIdleTimerDisabled = false
+                screenSaverActive = false
             }
         }
     }
@@ -307,18 +420,25 @@ struct ContentView: View {
     private func startSleep() {
         audioManager.startWhiteNoise(type: selectedNoise) { onSleepDetected() }
         withAnimation(.spring(duration: 0.4)) { appState = .playingNoise }
+        if screenSaverEnabled {
+            UIApplication.shared.isIdleTimerDisabled = true
+            lastInteractionTime = Date()
+        }
     }
 
     private func stopEverything() {
         audioManager.stop()
         alarmManager.cancelAlarm()
         appState = .idle
+        UIApplication.shared.isIdleTimerDisabled = false
+        screenSaverActive = false
     }
 
     private func onSleepDetected() {
         appState = .sleepDetected
-        // Keep app alive in background with silent audio
-        audioManager.startSilentBackgroundAudio()
+        if screenSaverEnabled {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
         guard let sleepTime = audioManager.sleepTime else { return }
 
         let earliest = normalizedWakeTime(wakeWindowStart, after: sleepTime)

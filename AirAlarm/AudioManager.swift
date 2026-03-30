@@ -51,7 +51,6 @@ class AudioManager {
     private var audioPlayer: AVAudioPlayer?
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
-    private var silentPlayer: AVAudioPlayer?
     private var onSleepDetected: (() -> Void)?
     private var confirmationTimer: Timer?
     private var playbackMonitor: Timer?
@@ -88,75 +87,11 @@ class AudioManager {
         playerNode = nil
         audioPlayer?.stop()
         audioPlayer = nil
-        silentPlayer?.stop()
-        silentPlayer = nil
         isPlaying = false
 
         try? AVAudioSession.sharedInstance().setActive(false)
         NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
-    }
-
-    /// Start silent audio to keep the app alive in the background after sleep detection
-    func startSilentBackgroundAudio() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers, .defaultToSpeaker])
-            try session.setActive(true)
-        } catch {
-            Self.logger.error("Failed to configure silent audio session: \(error)")
-        }
-
-        // Generate a short silent WAV in memory
-        let sampleRate: Double = 44100
-        let duration: Double = 1.0
-        let frameCount = Int(sampleRate * duration)
-        let dataSize = frameCount * 2 // 16-bit mono
-        let headerSize = 44
-        var wav = Data(count: headerSize + dataSize)
-
-        // WAV header
-        wav.withUnsafeMutableBytes { buf in
-            let p = buf.bindMemory(to: UInt8.self).baseAddress!
-            // "RIFF"
-            p[0] = 0x52; p[1] = 0x49; p[2] = 0x46; p[3] = 0x46
-            let fileSize = UInt32(headerSize + dataSize - 8)
-            p[4] = UInt8(fileSize & 0xFF); p[5] = UInt8((fileSize >> 8) & 0xFF)
-            p[6] = UInt8((fileSize >> 16) & 0xFF); p[7] = UInt8((fileSize >> 24) & 0xFF)
-            // "WAVE"
-            p[8] = 0x57; p[9] = 0x41; p[10] = 0x56; p[11] = 0x45
-            // "fmt "
-            p[12] = 0x66; p[13] = 0x6D; p[14] = 0x74; p[15] = 0x20
-            p[16] = 16; p[17] = 0; p[18] = 0; p[19] = 0 // chunk size
-            p[20] = 1; p[21] = 0 // PCM
-            p[22] = 1; p[23] = 0 // mono
-            let sr = UInt32(sampleRate)
-            p[24] = UInt8(sr & 0xFF); p[25] = UInt8((sr >> 8) & 0xFF)
-            p[26] = UInt8((sr >> 16) & 0xFF); p[27] = UInt8((sr >> 24) & 0xFF)
-            let byteRate = UInt32(sampleRate * 2)
-            p[28] = UInt8(byteRate & 0xFF); p[29] = UInt8((byteRate >> 8) & 0xFF)
-            p[30] = UInt8((byteRate >> 16) & 0xFF); p[31] = UInt8((byteRate >> 24) & 0xFF)
-            p[32] = 2; p[33] = 0 // block align
-            p[34] = 16; p[35] = 0 // bits per sample
-            // "data"
-            p[36] = 0x64; p[37] = 0x61; p[38] = 0x74; p[39] = 0x61
-            let ds = UInt32(dataSize)
-            p[40] = UInt8(ds & 0xFF); p[41] = UInt8((ds >> 8) & 0xFF)
-            p[42] = UInt8((ds >> 16) & 0xFF); p[43] = UInt8((ds >> 24) & 0xFF)
-            // Audio data is already zeros (silence)
-        }
-
-        do {
-            let player = try AVAudioPlayer(data: wav)
-            player.numberOfLoops = -1
-            player.volume = 0.01
-            player.prepareToPlay()
-            player.play()
-            self.silentPlayer = player
-            Self.logger.info("Silent background audio started for keep-alive")
-        } catch {
-            Self.logger.error("Failed to start silent audio: \(error)")
-        }
     }
 
     func setVolume(_ value: Float) {

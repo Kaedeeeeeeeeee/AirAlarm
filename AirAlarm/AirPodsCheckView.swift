@@ -9,10 +9,9 @@ struct AirPodsCheckView: View {
     @State private var pollTimer: Timer?
 
     private let supportedModels = [
-        "AirPods Pro (2nd generation)",
+        "AirPods Pro 2",
         "AirPods Pro 3",
-        "AirPods 4",
-        "AirPods 4 (ANC)"
+        "AirPods 4"
     ]
 
     var body: some View {
