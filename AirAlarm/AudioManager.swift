@@ -1,5 +1,7 @@
 import AVFoundation
 import Combine
+import MediaPlayer
+import UIKit
 import os
 
 enum WhiteNoiseType: String, CaseIterable, Identifiable {
@@ -55,6 +57,7 @@ class AudioManager {
     private var confirmationTimer: Timer?
     private var playbackMonitor: Timer?
     private var interruptionStartTime: Date?
+    private var currentNoiseType: WhiteNoiseType?
 
     func startWhiteNoise(type: WhiteNoiseType, onSleep: @escaping () -> Void) {
         onSleepDetected = onSleep
@@ -62,8 +65,10 @@ class AudioManager {
         sleepTime = nil
         isConfirmingSleep = false
         confirmationTimer?.invalidate()
+        currentNoiseType = type
 
         configureAudioSession()
+        setupRemoteCommands()
 
         if let url = Bundle.main.url(forResource: type.fileName, withExtension: "mp3") {
             playAudioFile(url: url)
@@ -72,6 +77,7 @@ class AudioManager {
         }
 
         isPlaying = true
+        updateNowPlayingInfo(type: type)
         startPlaybackMonitor()
     }
 
@@ -88,7 +94,10 @@ class AudioManager {
         audioPlayer?.stop()
         audioPlayer = nil
         isPlaying = false
+        currentNoiseType = nil
 
+        clearRemoteCommands()
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         try? AVAudioSession.sharedInstance().setActive(false)
         NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
@@ -100,6 +109,53 @@ class AudioManager {
         if let node = playerNode {
             node.volume = value
         }
+    }
+
+    // MARK: - Now Playing & Remote Commands
+
+    private func setupRemoteCommands() {
+        let center = MPRemoteCommandCenter.shared()
+
+        center.playCommand.isEnabled = true
+        center.playCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            Self.logger.info("Remote command: play — cancelling sleep confirmation")
+            DispatchQueue.main.async {
+                self.cancelSleepConfirmation(resumePlayback: true)
+            }
+            return .success
+        }
+
+        center.pauseCommand.isEnabled = true
+        center.pauseCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            Self.logger.info("Remote command: pause — starting sleep confirmation")
+            self.audioPlayer?.pause()
+            self.playerNode?.pause()
+            DispatchQueue.main.async {
+                self.beginSleepConfirmation()
+            }
+            return .success
+        }
+    }
+
+    private func clearRemoteCommands() {
+        let center = MPRemoteCommandCenter.shared()
+        center.playCommand.removeTarget(nil)
+        center.pauseCommand.removeTarget(nil)
+    }
+
+    private func updateNowPlayingInfo(type: WhiteNoiseType) {
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle: type.rawValue,
+            MPMediaItemPropertyArtist: "AirAlarm",
+            MPNowPlayingInfoPropertyPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: 0.0,
+        ]
+        if let image = UIImage(named: "AppIcon") {
+            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
     // MARK: - File-Based Playback
@@ -196,7 +252,11 @@ class AudioManager {
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
 
+        Self.logger.info("Audio interruption: \(type == .began ? "began" : "ended"), isPlaying=\(self.isPlaying)")
+
         if type == .began && isPlaying {
+            audioPlayer?.pause()
+            playerNode?.pause()
             DispatchQueue.main.async { [weak self] in
                 self?.beginSleepConfirmation()
             }
@@ -213,6 +273,8 @@ class AudioManager {
         guard let userInfo = notification.userInfo,
               let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
               let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else { return }
+
+        Self.logger.info("Audio route changed: reason=\(reasonValue), isPlaying=\(self.isPlaying), isConfirming=\(self.isConfirmingSleep)")
 
         if reason == .oldDeviceUnavailable && isPlaying && !isConfirmingSleep {
             Self.logger.info("Audio route changed: headphones removed, starting sleep confirmation")

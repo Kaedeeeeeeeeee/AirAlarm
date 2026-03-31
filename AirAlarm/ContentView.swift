@@ -29,7 +29,7 @@ struct ContentView: View {
     @AppStorage("wakeWindowStartHour") private var storedHour: Int = 6
     @AppStorage("wakeWindowStartMinute") private var storedMinute: Int = 30
     @AppStorage("noiseVolume") private var storedVolume: Double = 0.7
-    @AppStorage("screenSaverEnabled") private var screenSaverEnabled: Bool = true
+    @AppStorage("screenSaverEnabled") private var screenSaverEnabled: Bool = false
     @AppStorage("hasSeenScreenSaverAlert") private var hasSeenScreenSaverAlert = false
     @State private var showScreenSaverAlert = false
     @State private var screenSaverActive = false
@@ -40,13 +40,18 @@ struct ContentView: View {
         wakeWindowStart.addingTimeInterval(90 * 60)
     }
 
+    private var isScreenSaverOn: Bool {
+        screenSaverEnabled && isSleepModeActive
+    }
+
     var body: some View {
         ZStack {
             noiseTintOverlay
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.5), value: selectedNoise)
 
-            if !screenSaverActive {
+            // Main UI — hidden when screen saver is on
+            if !isScreenSaverOn {
                 VStack(spacing: 0) {
                     // Top bar: always in layout, hidden via opacity in sleep mode
                     HStack {
@@ -90,6 +95,7 @@ struct ContentView: View {
                         sleepTime: audioManager.sleepTime,
                         wakeTime: alarmManager.scheduledWakeTime,
                         scheduledCycles: alarmManager.scheduledCycles,
+                        isConfirmingSleep: audioManager.isConfirmingSleep,
                         onTapCenter: { handleAction() }
                     )
                     .frame(width: 350, height: 350)
@@ -101,7 +107,7 @@ struct ContentView: View {
                                 .transition(.scale.combined(with: .opacity))
                         }
 
-                        if appState == .playingNoise {
+                        if appState == .playingNoise && !audioManager.isConfirmingSleep {
                             playingStatus
                                 .transition(.scale.combined(with: .opacity))
                         }
@@ -145,21 +151,46 @@ struct ContentView: View {
                 .padding(.horizontal, 20)
             }
 
-            // Screen saver overlay
-            if screenSaverActive {
+            // Screen saver overlay — semi-dark + fully black
+            if isScreenSaverOn {
                 Color.black
                     .ignoresSafeArea()
-                    .transition(.opacity)
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            screenSaverActive = false
+
+                // Semi-dark: show toggle UI (hidden when fully black)
+                if !screenSaverActive {
+                    VStack(spacing: 0) {
+                        Spacer()
+                        // Match exact same layout as main UI bottom controls
+                        VStack(spacing: 0) {
+                            screenSaverToggle
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 16)
+
+                            // Invisible spacer matching volumeSlider height
+                            Color.clear
+                                .frame(height: 30)
+                                .padding(.bottom, 12)
                         }
-                        lastInteractionTime = Date()
+                        .frame(height: 150)
                     }
+                    .padding(.horizontal, 20)
+                    .transition(.opacity)
+                } else {
+                    // Fully black: tap to return to semi-dark
+                    Color.black
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                screenSaverActive = false
+                            }
+                            lastInteractionTime = Date()
+                        }
+                }
             }
         }
+        .animation(.easeInOut(duration: 0.5), value: isScreenSaverOn)
         .animation(.easeInOut(duration: 0.5), value: screenSaverActive)
-        .statusBarHidden(screenSaverActive)
+        .statusBarHidden(isScreenSaverOn)
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
@@ -182,6 +213,15 @@ struct ContentView: View {
             if wasRinging && !isRinging {
                 saveSleepRecord()
                 appState = .idle
+                screenSaverEnabled = false
+            }
+        }
+        .onChange(of: screenSaverEnabled) { _, enabled in
+            if enabled && isSleepModeActive {
+                UIApplication.shared.isIdleTimerDisabled = true
+                lastInteractionTime = Date()
+                screenSaverActive = false
+            } else {
                 UIApplication.shared.isIdleTimerDisabled = false
                 screenSaverActive = false
             }
@@ -411,8 +451,7 @@ struct ContentView: View {
             withAnimation(.spring(duration: 0.4)) {
                 alarmManager.cancelAlarm()
                 appState = .idle
-                UIApplication.shared.isIdleTimerDisabled = false
-                screenSaverActive = false
+                screenSaverEnabled = false
             }
         }
     }
@@ -420,25 +459,17 @@ struct ContentView: View {
     private func startSleep() {
         audioManager.startWhiteNoise(type: selectedNoise) { onSleepDetected() }
         withAnimation(.spring(duration: 0.4)) { appState = .playingNoise }
-        if screenSaverEnabled {
-            UIApplication.shared.isIdleTimerDisabled = true
-            lastInteractionTime = Date()
-        }
     }
 
     private func stopEverything() {
         audioManager.stop()
         alarmManager.cancelAlarm()
         appState = .idle
-        UIApplication.shared.isIdleTimerDisabled = false
-        screenSaverActive = false
+        screenSaverEnabled = false
     }
 
     private func onSleepDetected() {
         appState = .sleepDetected
-        if screenSaverEnabled {
-            UIApplication.shared.isIdleTimerDisabled = true
-        }
         guard let sleepTime = audioManager.sleepTime else { return }
 
         let earliest = normalizedWakeTime(wakeWindowStart, after: sleepTime)

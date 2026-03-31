@@ -8,6 +8,7 @@ struct ClockDialView: View {
     let sleepTime: Date?
     let wakeTime: Date?
     let scheduledCycles: Int
+    let isConfirmingSleep: Bool
     let onTapCenter: () -> Void
 
     // Fixed 90-minute window
@@ -218,7 +219,13 @@ struct ClockDialView: View {
                     .foregroundStyle(.white)
 
                 case .playingNoise:
-                    waveformAnimation
+                    if isConfirmingSleep {
+                        Image(systemName: "pause.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.white.opacity(0.6))
+                    } else {
+                        waveformAnimation
+                    }
 
                 case .sleepDetected:
                     VStack(spacing: 6) {

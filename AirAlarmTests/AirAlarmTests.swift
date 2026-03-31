@@ -83,6 +83,82 @@ struct SleepCycleCalculatorTests {
         #expect(result?.cycles == 5)
     }
 
+    // MARK: - Real-world scenarios
+
+    @Test func optimalWakeTime_sleepAt2350_wake730to900() {
+        // Sleep at 23:50, wake window 7:30-9:00
+        let sleepTime = makeDate(hour: 23, minute: 50)
+        let earliest = makeDate(hour: 7, minute: 30, dayOffset: 1)
+        let latest = makeDate(hour: 9, minute: 0, dayOffset: 1)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        // Cycle 5: 23:50 + 7.5h = 7:20 ❌
+        // Cycle 6: 23:50 + 9h = 8:50 ✅
+        #expect(result?.cycles == 6)
+        let expected = sleepTime.addingTimeInterval(6 * 90 * 60)
+        #expect(result?.wakeTime == expected)
+    }
+
+    @Test func optimalWakeTime_sleepAt0050_wake730to900() {
+        // Sleep at 00:50, wake window 7:30-9:00
+        let sleepTime = makeDate(hour: 0, minute: 50)
+        let earliest = makeDate(hour: 7, minute: 30)
+        let latest = makeDate(hour: 9, minute: 0)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        // Cycle 4: 00:50 + 6h = 6:50 ❌
+        // Cycle 5: 00:50 + 7.5h = 8:20 ✅
+        // Cycle 6: 00:50 + 9h = 9:50 ❌
+        #expect(result?.cycles == 5)
+        let expected = sleepTime.addingTimeInterval(5 * 90 * 60)
+        #expect(result?.wakeTime == expected)
+    }
+
+    @Test func optimalWakeTime_sleepAt2300_wake700to830() {
+        // Sleep at 23:00, wake window 7:00-8:30
+        let sleepTime = makeDate(hour: 23, minute: 0)
+        let earliest = makeDate(hour: 7, minute: 0, dayOffset: 1)
+        let latest = makeDate(hour: 8, minute: 30, dayOffset: 1)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        // Cycle 5: 23:00 + 7.5h = 6:30 ❌
+        // Cycle 6: 23:00 + 9h = 8:00 ✅
+        // Cycle 7: 23:00 + 10.5h = 9:30 ❌
+        #expect(result?.cycles == 6)
+        let expected = sleepTime.addingTimeInterval(6 * 90 * 60)
+        #expect(result?.wakeTime == expected)
+    }
+
+    @Test func optimalWakeTime_sleepAt0130_wake730to900() {
+        // Sleep at 01:30, wake window 7:30-9:00
+        let sleepTime = makeDate(hour: 1, minute: 30)
+        let earliest = makeDate(hour: 7, minute: 30)
+        let latest = makeDate(hour: 9, minute: 0)
+
+        let result = SleepCycleCalculator.optimalWakeTime(
+            sleepTime: sleepTime, earliestWake: earliest, latestWake: latest
+        )
+
+        #expect(result != nil)
+        // Cycle 4: 01:30 + 6h = 7:30 ✅
+        // Cycle 5: 01:30 + 7.5h = 9:00 ✅
+        #expect(result?.cycles == 5) // should pick latest
+        let expected = sleepTime.addingTimeInterval(5 * 90 * 60)
+        #expect(result?.wakeTime == expected)
+    }
+
     // MARK: - allCycleTimes
 
     @Test func allCycleTimes_defaultCount_returns8Cycles() {
