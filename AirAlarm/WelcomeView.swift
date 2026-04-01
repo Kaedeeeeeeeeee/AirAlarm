@@ -13,7 +13,7 @@ struct WelcomeView: View {
             Image(systemName: "moon.stars.fill")
                 .font(.system(size: 72))
                 .foregroundStyle(.white.opacity(0.8))
-                .symbolEffect(.breathe, isActive: appeared)
+                .symbolEffect(.pulse, isActive: appeared)
                 .padding(.bottom, 24)
 
             Text(loc.t("ready_sleep"))
@@ -41,7 +41,7 @@ struct WelcomeView: View {
                 .padding(.horizontal, 48)
                 .padding(.vertical, 16)
             }
-            .glassEffect(.regular, in: .capsule)
+            .glass(.regular, in: .capsule)
             .padding(.bottom, 60)
         }
         .onAppear { appeared = true }

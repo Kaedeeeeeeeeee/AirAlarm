@@ -250,7 +250,7 @@ struct ClockDialView: View {
             .frame(width: radius * 2, height: radius * 2)
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular, in: .circle)
+        .glass(.regular, in: .circle)
         .accessibilityLabel(centerButtonLabel)
         .position(center)
     }

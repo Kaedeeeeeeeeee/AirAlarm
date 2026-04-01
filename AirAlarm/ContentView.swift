@@ -62,7 +62,7 @@ struct ContentView: View {
                                 .foregroundStyle(.white.opacity(0.6))
                                 .padding(isRegularWidth ? 14 : 10)
                         }
-                        .glassEffect(.regular, in: .circle)
+                        .glass(.regular, in: .circle)
                         .accessibilityLabel(loc.t("settings"))
                         .accessibilityIdentifier("settingsButton")
 
@@ -77,7 +77,7 @@ struct ContentView: View {
                                 .foregroundStyle(.white.opacity(0.6))
                                 .padding(isRegularWidth ? 14 : 10)
                         }
-                        .glassEffect(.regular, in: .circle)
+                        .glass(.regular, in: .circle)
                         .accessibilityLabel("Test Alarm")
                         .accessibilityIdentifier("testAlarmButton")
                         #endif
@@ -359,7 +359,7 @@ struct ContentView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .glass(.regular, in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Noise Picker
@@ -379,7 +379,7 @@ struct ContentView: View {
                         .padding(.vertical, 9)
                         .foregroundStyle(selectedNoise == noise ? .white : .white.opacity(0.5))
                     }
-                    .glassEffect(selectedNoise == noise ? .regular : .clear, in: .capsule)
+                    .glass(selectedNoise == noise ? .regular : .clear, in: .capsule)
                     .accessibilityLabel(noise.rawValue)
                     .accessibilityAddTraits(selectedNoise == noise ? .isSelected : [])
                     .accessibilityIdentifier("noise_\(noise.rawValue)")

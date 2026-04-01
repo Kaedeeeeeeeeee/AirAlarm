@@ -16,9 +16,20 @@ struct AirAlarmApp: App {
     @State private var localization = LocalizationManager()
     @State private var contentView: ContentView?
 
+    @ViewBuilder
+    private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer {
+                content()
+            }
+        } else {
+            content()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
-            GlassEffectContainer {
+            glassContainer {
                 ZStack {
                     BreathingBackground()
 

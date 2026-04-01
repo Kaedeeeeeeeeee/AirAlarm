@@ -36,7 +36,7 @@ struct OnboardingView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                 }
-                .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                .glass(.regular, in: .rect(cornerRadius: 16))
                 .accessibilityIdentifier(currentPage < 2 ? "onboardingNext" : "onboardingGetStarted")
                 .padding(.horizontal, 32)
                 .padding(.bottom, 40)

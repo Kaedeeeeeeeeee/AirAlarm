@@ -63,7 +63,7 @@ struct AirPodsCheckView: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassEffect(.regular, in: .rect(cornerRadius: 16))
+            .glass(.regular, in: .rect(cornerRadius: 16))
             .padding(.horizontal, 32)
 
             Spacer()
@@ -79,7 +79,7 @@ struct AirPodsCheckView: View {
                 .padding(.horizontal, 48)
                 .padding(.vertical, 16)
             }
-            .glassEffect(isConnected ? .regular : .clear, in: .capsule)
+            .glass(isConnected ? .regular : .clear, in: .capsule)
             .padding(.bottom, 60)
         }
         .onAppear {

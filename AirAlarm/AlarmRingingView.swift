@@ -35,7 +35,7 @@ struct AlarmRingingView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 48)
-                .glassEffect(.regular, in: .rect(cornerRadius: 28))
+                .glass(.regular, in: .rect(cornerRadius: 28))
             }
             .scaleEffect(pulseScale)
             .padding(.horizontal, 32)
@@ -53,7 +53,7 @@ struct AlarmRingingView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
             }
-            .glassEffect(.clear, in: .capsule)
+            .glass(.clear, in: .capsule)
             .padding(.top, 20)
             .accessibilityLabel(loc.t("snooze"))
 
