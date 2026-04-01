@@ -15,6 +15,7 @@ struct ContentView: View {
     var alarmManager: AlarmManager
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var selectedNoise: WhiteNoiseType = .rain
     @State private var wakeWindowStart = Calendar.current.date(
@@ -57,30 +58,32 @@ struct ContentView: View {
                     HStack {
                         Button { showSettings = true } label: {
                             Image(systemName: "gearshape")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.4))
-                                .padding(10)
+                                .font(isRegularWidth ? .body : .caption)
+                                .foregroundStyle(.white.opacity(0.6))
+                                .padding(isRegularWidth ? 14 : 10)
                         }
-                        .glassEffect(.clear, in: .circle)
+                        .glassEffect(.regular, in: .circle)
                         .accessibilityLabel(loc.t("settings"))
                         .accessibilityIdentifier("settingsButton")
 
                         Spacer()
 
+                        #if DEBUG
                         Button {
                             alarmManager.startRinging()
                         } label: {
                             Image(systemName: "bell.and.waves.left.and.right")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.4))
-                                .padding(10)
+                                .font(isRegularWidth ? .body : .caption)
+                                .foregroundStyle(.white.opacity(0.6))
+                                .padding(isRegularWidth ? 14 : 10)
                         }
-                        .glassEffect(.clear, in: .circle)
+                        .glassEffect(.regular, in: .circle)
                         .accessibilityLabel("Test Alarm")
                         .accessibilityIdentifier("testAlarmButton")
+                        #endif
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.top, 4)
+                    .padding(.horizontal, isRegularWidth ? 20 : 8)
+                    .padding(.top, isRegularWidth ? 12 : 4)
                     .opacity(isSleepModeActive ? 0 : 1)
                     .allowsHitTesting(!isSleepModeActive)
 
@@ -98,7 +101,7 @@ struct ContentView: View {
                         isConfirmingSleep: audioManager.isConfirmingSleep,
                         onTapCenter: { handleAction() }
                     )
-                    .frame(width: 350, height: 350)
+                    .frame(width: isRegularWidth ? 500 : 350, height: isRegularWidth ? 500 : 350)
 
                     // Status area — fixed height to prevent clock shift
                     ZStack {
@@ -430,6 +433,10 @@ struct ContentView: View {
     }
 
     // MARK: - Screen Saver Helpers
+
+    private var isRegularWidth: Bool {
+        horizontalSizeClass == .regular
+    }
 
     private var isSleepModeActive: Bool {
         appState == .playingNoise || appState == .sleepDetected || appState == .alarmSet
