@@ -70,7 +70,7 @@ struct SettingsView: View {
                         Text("AirAlarm")
                             .foregroundStyle(.white)
                         Spacer()
-                        Text("1.0")
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.3")
                             .foregroundStyle(.white.opacity(0.4))
                     }
                 } header: {

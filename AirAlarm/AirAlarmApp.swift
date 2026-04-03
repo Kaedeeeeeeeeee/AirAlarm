@@ -46,14 +46,12 @@ struct AirAlarmApp: App {
                                     alarmManager.cancelAlarm()
                                 }
 
-                                // Gracefully send app to background after a brief moment
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                                    UIControl().sendAction(
-                                        #selector(URLSessionTask.suspend),
-                                        to: UIApplication.shared,
-                                        for: nil
-                                    )
-                                }
+                                // Gracefully send app to background
+                                UIControl().sendAction(
+                                    #selector(URLSessionTask.suspend),
+                                    to: UIApplication.shared,
+                                    for: nil
+                                )
                             }
                         )
                         .transition(.opacity)
