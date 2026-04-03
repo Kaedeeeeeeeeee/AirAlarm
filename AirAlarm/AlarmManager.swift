@@ -1,11 +1,19 @@
-import UserNotifications
-import AVFoundation
-import MediaPlayer
-import UIKit
+import AlarmKit
+import AppIntents
+import SwiftUI
 import os
 
+// MARK: - Metadata
+
+struct SleepAlarmMetadata: AlarmMetadata {
+    var cycles: Int
+    var duration: String
+}
+
+// MARK: - Alarm Manager
+
 @Observable
-class AlarmManager {
+class SleepAlarmManager {
     private static let logger = Logger(subsystem: "com.zhangshifeng.airalarm", category: "Alarm")
 
     var isAlarmScheduled = false
@@ -16,78 +24,99 @@ class AlarmManager {
 
     var localization: LocalizationManager?
 
-    private var alarmPlayer: AVAudioPlayer?
-    private var alarmTimer: Timer?
-    private var volumeTimer: Timer?
-    private var vibrationTimer: Timer?
-    private var previousVolume: Float?
-    private var volumeView: MPVolumeView?
+    private var currentAlarmID: UUID?
+    private var ringingTimer: Timer?
+
+    private var system: AlarmKit.AlarmManager { .shared }
+
+    // MARK: - Authorization
 
     func requestPermission() async -> Bool {
-        let center = UNUserNotificationCenter.current()
         do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .criticalAlert])
-            if granted { return true }
-            return try await center.requestAuthorization(options: [.alert, .sound])
+            let state = try await system.requestAuthorization()
+            return state == .authorized
         } catch {
-            Self.logger.error("Notification permission error: \(error)")
+            Self.logger.error("AlarmKit authorization error: \(error)")
             return false
         }
     }
 
+    // MARK: - Schedule
+
     func scheduleAlarm(at wakeTime: Date, cycles: Int) {
-        let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
-
-        let content = UNMutableNotificationContent()
-        let loc = localization
-        content.title = loc?.t("notif_wake_title") ?? "Time to Wake Up"
-        let duration = SleepCycleCalculator.formatDuration(cycles: cycles)
-        let bodyTemplate = loc?.t("notif_wake_body") ?? "You've completed %d sleep cycles (%@). This is your optimal wake time!"
-        content.body = String(format: bodyTemplate, cycles, duration)
-        content.sound = UNNotificationSound.defaultCritical
-        content.interruptionLevel = .timeSensitive
-
         let interval = wakeTime.timeIntervalSinceNow
         guard interval > 0 else { return }
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-        let request = UNNotificationRequest(identifier: "air-alarm-wake", content: content, trigger: trigger)
-        center.add(request)
+        let id = UUID()
+        currentAlarmID = id
 
-        // Fallback notification (no criticalAlert entitlement needed)
-        let fallbackContent = UNMutableNotificationContent()
-        fallbackContent.title = content.title
-        fallbackContent.body = content.body
-        fallbackContent.sound = .default
-        fallbackContent.interruptionLevel = .timeSensitive
+        let duration = SleepCycleCalculator.formatDuration(cycles: cycles)
 
-        let fallbackTrigger = UNTimeIntervalNotificationTrigger(timeInterval: interval + 2, repeats: false)
-        let fallbackRequest = UNNotificationRequest(identifier: "air-alarm-wake-fallback", content: fallbackContent, trigger: fallbackTrigger)
-        center.add(fallbackRequest)
+        let stopButton = AlarmButton(
+            text: "Good Morning",
+            textColor: .white,
+            systemImageName: "sunrise.fill"
+        )
 
-        alarmTimer?.invalidate()
-        alarmTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
-            self?.startRinging()
+        let snoozeButton = AlarmButton(
+            text: "Snooze 5 min",
+            textColor: .white,
+            systemImageName: "moon.zzz"
+        )
+
+        let alert = AlarmPresentation.Alert(
+            title: "Time to Wake Up",
+            stopButton: stopButton,
+            secondaryButton: snoozeButton,
+            secondaryButtonBehavior: .custom
+        )
+
+        let metadata = SleepAlarmMetadata(cycles: cycles, duration: duration)
+
+        let attributes = AlarmAttributes<SleepAlarmMetadata>(
+            presentation: AlarmPresentation(alert: alert),
+            metadata: metadata,
+            tintColor: .indigo
+        )
+
+        let config = AlarmKit.AlarmManager.AlarmConfiguration.alarm(
+            schedule: .fixed(wakeTime),
+            attributes: attributes,
+            secondaryIntent: SnoozeAlarmIntent()
+        )
+
+        Task {
+            do {
+                _ = try await system.schedule(id: id, configuration: config)
+                await MainActor.run {
+                    self.isAlarmScheduled = true
+                    self.scheduledWakeTime = wakeTime
+                    self.scheduledCycles = cycles
+                    self.startRingingCheck()
+                }
+                Self.logger.info("AlarmKit alarm scheduled for \(wakeTime), \(cycles) cycles (\(duration))")
+            } catch {
+                Self.logger.error("Failed to schedule alarm: \(error)")
+            }
         }
-
-        // Schedule background task as backup
-        BackgroundTaskManager.scheduleAlarmCheck(at: wakeTime)
-
-        isAlarmScheduled = true
-        scheduledWakeTime = wakeTime
-        scheduledCycles = cycles
     }
 
+    // MARK: - Cancel
+
     func cancelAlarm() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        alarmTimer?.invalidate()
-        alarmTimer = nil
-        stopRinging()
+        ringingTimer?.invalidate()
+        ringingTimer = nil
+
+        if let id = currentAlarmID {
+            try? system.cancel(id: id)
+        }
+
         isAlarmScheduled = false
         scheduledWakeTime = nil
         scheduledCycles = 0
         snoozeCount = 0
+        isRinging = false
+        currentAlarmID = nil
     }
 
     // MARK: - Snooze
@@ -99,91 +128,45 @@ class AlarmManager {
         scheduleAlarm(at: snoozeTime, cycles: scheduledCycles)
     }
 
-    // MARK: - Ringing
+    // MARK: - Ringing State (for in-app UI)
 
     func startRinging() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
-            try session.setActive(true)
-        } catch {
-            Self.logger.error("Failed to configure alarm audio session: \(error)")
-        }
-
-        // Save current volume and set to max
-        previousVolume = session.outputVolume
-        setSystemVolume(1.0)
-
-        guard let url = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else { return }
-
-        do {
-            let player = try AVAudioPlayer(contentsOf: url)
-            player.numberOfLoops = -1
-            player.volume = 0.0
-            player.prepareToPlay()
-            player.play()
-            self.alarmPlayer = player
-            self.isRinging = true
-            startVolumeRamp()
-            startVibration()
-        } catch {
-            Self.logger.error("Failed to play alarm: \(error)")
-        }
+        isRinging = true
     }
 
     func stopRinging() {
-        volumeTimer?.invalidate()
-        volumeTimer = nil
-        vibrationTimer?.invalidate()
-        vibrationTimer = nil
-        alarmPlayer?.stop()
-        alarmPlayer = nil
+        ringingTimer?.invalidate()
+        ringingTimer = nil
         isRinging = false
 
-        // Restore previous volume
-        if let prev = previousVolume {
-            setSystemVolume(prev)
-            previousVolume = nil
+        if let id = currentAlarmID {
+            try? system.stop(id: id)
         }
     }
 
-    private func setSystemVolume(_ value: Float) {
-        if volumeView == nil {
-            volumeView = MPVolumeView(frame: .zero)
-        }
-        if let slider = volumeView?.subviews.first(where: { $0 is UISlider }) as? UISlider {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                slider.value = value
-            }
-        }
-    }
-
-    private func startVibration() {
-        // Vibrate immediately, then repeat every 1.5 seconds
-        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        vibrationTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        }
-    }
-
-    private func startVolumeRamp() {
-        let rampDuration: Float = 15.0
-        let stepInterval: TimeInterval = 0.2
-        let steps = Int(rampDuration / Float(stepInterval))
-        var currentStep = 0
-
-        volumeTimer = Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { [weak self] timer in
-            guard let self, let player = self.alarmPlayer else {
+    /// Poll to detect when alarm time arrives while app is in foreground
+    private func startRingingCheck() {
+        ringingTimer?.invalidate()
+        ringingTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self, let wake = self.scheduledWakeTime else {
                 timer.invalidate()
                 return
             }
-            currentStep += 1
-            let progress = Float(currentStep) / Float(steps)
-            player.volume = progress * progress
-            if currentStep >= steps {
-                player.volume = 1.0
+            if Date() >= wake && !self.isRinging {
+                self.isRinging = true
                 timer.invalidate()
             }
         }
+    }
+}
+
+// MARK: - App Intents
+
+struct SnoozeAlarmIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Snooze Alarm"
+    static var description: IntentDescription = "Snooze the alarm for 5 minutes"
+
+    func perform() async throws -> some IntentResult {
+        .result()
     }
 }

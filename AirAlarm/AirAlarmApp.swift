@@ -12,17 +12,13 @@ struct AirAlarmApp: App {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var showOnboarding = false
     @State private var currentStep: OnboardingStep = .welcome
-    @State private var alarmManager = AlarmManager()
+    @State private var alarmManager = SleepAlarmManager()
     @State private var localization = LocalizationManager()
     @State private var contentView: ContentView?
 
     @ViewBuilder
     private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer {
-                content()
-            }
-        } else {
+        GlassEffectContainer {
             content()
         }
     }
@@ -98,7 +94,6 @@ struct AirAlarmApp: App {
             .onAppear {
                 showOnboarding = !hasSeenOnboarding
                 alarmManager.localization = localization
-                BackgroundTaskManager.register(alarmManager: alarmManager)
             }
             .onOpenURL { url in
                 if url.host == "start" {

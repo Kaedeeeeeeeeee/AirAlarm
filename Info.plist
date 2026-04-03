@@ -16,11 +16,8 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
-		<string>processing</string>
 	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.zhangshifeng.airalarm.alarmcheck</string>
-	</array>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>AirAlarm uses alarms to wake you at the optimal point in your sleep cycle for a refreshed morning.</string>
 </dict>
 </plist>

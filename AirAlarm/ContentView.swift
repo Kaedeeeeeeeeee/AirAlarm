@@ -12,7 +12,7 @@ enum AppState {
 
 struct ContentView: View {
     @State private var audioManager = AudioManager()
-    var alarmManager: AlarmManager
+    var alarmManager: SleepAlarmManager
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.modelContext) private var modelContext
     // NOTE: horizontalSizeClass removed — this iPhone-only app was being
@@ -201,6 +201,8 @@ struct ContentView: View {
         }
         .task {
             hasNotificationPermission = await alarmManager.requestPermission()
+            // Also request notification permission for bedtime reminders & background warnings
+            try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
             restoreSettings()
         }
         .onChange(of: selectedNoise) { _, new in
@@ -518,7 +520,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(alarmManager: AlarmManager())
+    ContentView(alarmManager: SleepAlarmManager())
         .environment(LocalizationManager())
         .modelContainer(for: SleepRecord.self)
 }
