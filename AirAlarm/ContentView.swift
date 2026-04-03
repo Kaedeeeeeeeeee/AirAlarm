@@ -15,7 +15,9 @@ struct ContentView: View {
     var alarmManager: AlarmManager
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    // NOTE: horizontalSizeClass removed — this iPhone-only app was being
+    // mis-detected as .regular on iPad compatibility mode, causing layout
+    // overflow that hid the top-bar buttons (Apple review rejection 4.0).
 
     @State private var selectedNoise: WhiteNoiseType = .rain
     @State private var wakeWindowStart = Calendar.current.date(
@@ -434,9 +436,7 @@ struct ContentView: View {
 
     // MARK: - Screen Saver Helpers
 
-    private var isRegularWidth: Bool {
-        horizontalSizeClass == .regular
-    }
+    private var isRegularWidth: Bool { false }
 
     private var isSleepModeActive: Bool {
         appState == .playingNoise || appState == .sleepDetected || appState == .alarmSet
