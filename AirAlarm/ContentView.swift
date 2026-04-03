@@ -72,7 +72,9 @@ struct ContentView: View {
 
                         #if DEBUG
                         Button {
-                            alarmManager.startRinging()
+                            // Preview AlarmKit alarm in 5 seconds
+                            let previewTime = Date().addingTimeInterval(5)
+                            alarmManager.scheduleAlarm(at: previewTime, cycles: 4)
                         } label: {
                             Image(systemName: "bell.and.waves.left.and.right")
                                 .font(isRegularWidth ? .body : .caption)
@@ -80,7 +82,7 @@ struct ContentView: View {
                                 .padding(isRegularWidth ? 14 : 10)
                         }
                         .glass(.regular, in: .circle)
-                        .accessibilityLabel("Test Alarm")
+                        .accessibilityLabel("Preview Alarm (5s)")
                         .accessibilityIdentifier("testAlarmButton")
                         #endif
                     }
@@ -494,6 +496,10 @@ struct ContentView: View {
             alarmManager.scheduleAlarm(at: latest, cycles: max(fallbackCycles, 1))
             withAnimation(.spring(duration: 0.4)) { appState = .alarmSet }
         }
+
+        // AlarmKit is system-level — phone can safely sleep now.
+        // This ensures the alarm appears full-screen on the lock screen.
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     func saveSleepRecord() {

@@ -50,6 +50,32 @@ class SleepAlarmManager {
         let id = UUID()
         currentAlarmID = id
 
+        // Set state synchronously so callers can rely on it immediately
+        isAlarmScheduled = true
+        scheduledWakeTime = wakeTime
+        scheduledCycles = cycles
+        startRingingCheck()
+
+        // AlarmKit scheduling happens async
+        Task {
+            do {
+                let config = buildConfiguration(wakeTime: wakeTime, cycles: cycles)
+                _ = try await system.schedule(id: id, configuration: config)
+                let duration = SleepCycleCalculator.formatDuration(cycles: cycles)
+                Self.logger.info("AlarmKit alarm scheduled for \(wakeTime), \(cycles) cycles (\(duration))")
+            } catch {
+                Self.logger.error("Failed to schedule alarm: \(error)")
+                await MainActor.run {
+                    guard self.currentAlarmID == id else { return }
+                    self.isAlarmScheduled = false
+                    self.scheduledWakeTime = nil
+                    self.scheduledCycles = 0
+                }
+            }
+        }
+    }
+
+    private func buildConfiguration(wakeTime: Date, cycles: Int) -> AlarmKit.AlarmManager.AlarmConfiguration<SleepAlarmMetadata> {
         let duration = SleepCycleCalculator.formatDuration(cycles: cycles)
 
         let stopButton = AlarmButton(
@@ -79,26 +105,12 @@ class SleepAlarmManager {
             tintColor: .indigo
         )
 
-        let config = AlarmKit.AlarmManager.AlarmConfiguration.alarm(
+        return .alarm(
             schedule: .fixed(wakeTime),
             attributes: attributes,
+            stopIntent: DismissAlarmIntent(),
             secondaryIntent: SnoozeAlarmIntent()
         )
-
-        Task {
-            do {
-                _ = try await system.schedule(id: id, configuration: config)
-                await MainActor.run {
-                    self.isAlarmScheduled = true
-                    self.scheduledWakeTime = wakeTime
-                    self.scheduledCycles = cycles
-                    self.startRingingCheck()
-                }
-                Self.logger.info("AlarmKit alarm scheduled for \(wakeTime), \(cycles) cycles (\(duration))")
-            } catch {
-                Self.logger.error("Failed to schedule alarm: \(error)")
-            }
-        }
     }
 
     // MARK: - Cancel
@@ -128,23 +140,31 @@ class SleepAlarmManager {
         scheduleAlarm(at: snoozeTime, cycles: scheduledCycles)
     }
 
-    // MARK: - Ringing State (for in-app UI)
+    // MARK: - Morning Greeting State
+
+    /// Show the morning greeting when the user returns to the app after alarm time.
+    /// Called on `willEnterForeground` and `didBecomeActive`.
+    func checkAlarmCompleted() {
+        guard isAlarmScheduled,
+              !isRinging,
+              let wake = scheduledWakeTime,
+              Date() >= wake else { return }
+        isRinging = true // triggers MorningGreetingView
+    }
 
     func startRinging() {
         isRinging = true
     }
 
     func stopRinging() {
-        ringingTimer?.invalidate()
-        ringingTimer = nil
         isRinging = false
-
         if let id = currentAlarmID {
             try? system.stop(id: id)
         }
     }
 
-    /// Poll to detect when alarm time arrives while app is in foreground
+    /// Delayed check: waits 30s after alarm time before showing greeting,
+    /// giving the user time to interact with the AlarmKit system UI first.
     private func startRingingCheck() {
         ringingTimer?.invalidate()
         ringingTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
@@ -152,7 +172,9 @@ class SleepAlarmManager {
                 timer.invalidate()
                 return
             }
-            if Date() >= wake && !self.isRinging {
+            // Wait 30 seconds past alarm time before showing greeting in-app
+            let delay: TimeInterval = 30
+            if Date() >= wake.addingTimeInterval(delay) && !self.isRinging {
                 self.isRinging = true
                 timer.invalidate()
             }
@@ -161,6 +183,17 @@ class SleepAlarmManager {
 }
 
 // MARK: - App Intents
+
+/// Opens the app when the user taps "Good Morning" to dismiss the alarm.
+struct DismissAlarmIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Dismiss Alarm"
+    static var description: IntentDescription = "Dismiss the alarm and open AirAlarm"
+    static var openAppWhenRun = true
+
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
+}
 
 struct SnoozeAlarmIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Snooze Alarm"

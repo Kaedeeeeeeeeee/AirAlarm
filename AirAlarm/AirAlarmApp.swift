@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 enum OnboardingStep {
     case welcome
@@ -30,7 +31,7 @@ struct AirAlarmApp: App {
                     BreathingBackground()
 
                     if alarmManager.isRinging {
-                        AlarmRingingView(
+                        MorningGreetingView(
                             cycles: alarmManager.scheduledCycles,
                             onDismiss: {
                                 // Save widget data
@@ -44,10 +45,14 @@ struct AirAlarmApp: App {
                                     alarmManager.stopRinging()
                                     alarmManager.cancelAlarm()
                                 }
-                            },
-                            onSnooze: {
-                                withAnimation(.smooth(duration: 0.5)) {
-                                    alarmManager.snooze()
+
+                                // Gracefully send app to background after a brief moment
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                    UIControl().sendAction(
+                                        #selector(URLSessionTask.suspend),
+                                        to: UIApplication.shared,
+                                        for: nil
+                                    )
                                 }
                             }
                         )
@@ -94,6 +99,13 @@ struct AirAlarmApp: App {
             .onAppear {
                 showOnboarding = !hasSeenOnboarding
                 alarmManager.localization = localization
+                alarmManager.checkAlarmCompleted()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                alarmManager.checkAlarmCompleted()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                alarmManager.checkAlarmCompleted()
             }
             .onOpenURL { url in
                 if url.host == "start" {

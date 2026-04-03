@@ -292,12 +292,12 @@ struct WhiteNoiseTypeTests {
     }
 }
 
-// MARK: - AlarmManager Tests
+// MARK: - SleepAlarmManager Tests
 
-struct AlarmManagerTests {
+struct SleepAlarmManagerTests {
 
     @Test func initialState_isCorrect() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         #expect(manager.isAlarmScheduled == false)
         #expect(manager.isRinging == false)
         #expect(manager.scheduledWakeTime == nil)
@@ -306,7 +306,7 @@ struct AlarmManagerTests {
     }
 
     @Test func cancelAlarm_resetsAllState() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let future = Date().addingTimeInterval(3600)
         manager.scheduleAlarm(at: future, cycles: 5)
         #expect(manager.isAlarmScheduled == true)
@@ -321,13 +321,13 @@ struct AlarmManagerTests {
     }
 
     @Test func stopRinging_resetsRingingState() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         manager.stopRinging()
         #expect(manager.isRinging == false)
     }
 
     @Test func scheduleAlarm_setsState() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let wakeTime = Date().addingTimeInterval(7200)
         manager.scheduleAlarm(at: wakeTime, cycles: 4)
 
@@ -337,7 +337,7 @@ struct AlarmManagerTests {
     }
 
     @Test func scheduleAlarm_pastTime_doesNotSchedule() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let pastTime = Date().addingTimeInterval(-60)
         manager.scheduleAlarm(at: pastTime, cycles: 3)
 
@@ -347,7 +347,7 @@ struct AlarmManagerTests {
     // MARK: - Snooze
 
     @Test func snooze_incrementsSnoozeCount() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let future = Date().addingTimeInterval(3600)
         manager.scheduleAlarm(at: future, cycles: 4)
         #expect(manager.snoozeCount == 0)
@@ -360,7 +360,7 @@ struct AlarmManagerTests {
     }
 
     @Test func snooze_reschedulesAlarm() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let future = Date().addingTimeInterval(3600)
         manager.scheduleAlarm(at: future, cycles: 4)
 
@@ -382,7 +382,7 @@ struct AlarmManagerTests {
     }
 
     @Test func snooze_stopsRinging() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let future = Date().addingTimeInterval(3600)
         manager.scheduleAlarm(at: future, cycles: 4)
         manager.snooze(minutes: 5)
@@ -391,7 +391,7 @@ struct AlarmManagerTests {
     }
 
     @Test func cancelAlarm_resetsSnoozeCount() {
-        let manager = AlarmManager()
+        let manager = SleepAlarmManager()
         let future = Date().addingTimeInterval(3600)
         manager.scheduleAlarm(at: future, cycles: 4)
         manager.snooze(minutes: 5)
@@ -400,6 +400,92 @@ struct AlarmManagerTests {
 
         manager.cancelAlarm()
         #expect(manager.snoozeCount == 0)
+    }
+
+    // MARK: - Ringing lifecycle
+
+    @Test func startRinging_setsIsRinging() {
+        let manager = SleepAlarmManager()
+        #expect(manager.isRinging == false)
+        manager.startRinging()
+        #expect(manager.isRinging == true)
+    }
+
+    @Test func stopRinging_afterStartRinging_resetsState() {
+        let manager = SleepAlarmManager()
+        manager.startRinging()
+        #expect(manager.isRinging == true)
+        manager.stopRinging()
+        #expect(manager.isRinging == false)
+    }
+
+    @Test func snooze_preservesCycles_incrementsCount() {
+        let manager = SleepAlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 6)
+        manager.startRinging()
+
+        manager.snooze(minutes: 10)
+
+        #expect(manager.scheduledCycles == 6) // preserved
+        #expect(manager.snoozeCount == 1)
+        #expect(manager.isRinging == false) // snooze calls stopRinging
+        #expect(manager.isAlarmScheduled == true) // rescheduled
+    }
+
+    @Test func scheduleAlarm_thenCancel_doesNotCrash() {
+        let manager = SleepAlarmManager()
+        let future = Date().addingTimeInterval(3600)
+        manager.scheduleAlarm(at: future, cycles: 3)
+        manager.cancelAlarm()
+        // Calling cancel again should be safe
+        manager.cancelAlarm()
+        #expect(manager.isAlarmScheduled == false)
+    }
+}
+
+// MARK: - SleepAlarmMetadata Tests
+
+struct SleepAlarmMetadataTests {
+
+    @Test func init_setsProperties() {
+        let meta = SleepAlarmMetadata(cycles: 5, duration: "7h 30m")
+        #expect(meta.cycles == 5)
+        #expect(meta.duration == "7h 30m")
+    }
+
+    @Test func codable_roundTrip() throws {
+        let original = SleepAlarmMetadata(cycles: 4, duration: "6 hours")
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(SleepAlarmMetadata.self, from: data)
+        #expect(decoded.cycles == original.cycles)
+        #expect(decoded.duration == original.duration)
+    }
+
+    @Test func hashable_equalValuesMatch() {
+        let a = SleepAlarmMetadata(cycles: 3, duration: "4h 30m")
+        let b = SleepAlarmMetadata(cycles: 3, duration: "4h 30m")
+        #expect(a == b)
+        #expect(a.hashValue == b.hashValue)
+    }
+}
+
+// MARK: - SnoozeAlarmIntent Tests
+
+struct SnoozeAlarmIntentTests {
+
+    @Test func title_isCorrect() {
+        #expect(SnoozeAlarmIntent.title == "Snooze Alarm")
+    }
+
+    @Test func canBeInstantiated() {
+        let intent = SnoozeAlarmIntent()
+        #expect(intent != nil)
+    }
+
+    @Test func perform_completesWithoutThrowing() async throws {
+        let intent = SnoozeAlarmIntent()
+        _ = try await intent.perform()
     }
 }
 
